@@ -19,7 +19,8 @@ const points = {
     ten:10
 }
 
-const compute_score = (record) = Object.keys(record.votes).reduce((x,acc)=>record.votes[x]+acc,0) / (votes.length + 1)
+const compute_score = (record) = Object.keys(record.votes)
+    .reduce((x,acc)=>record.votes[x]+acc,0) / (votes.length + 1)
 
 async function on_mention( e) {
     // this will need few routes:
@@ -77,6 +78,8 @@ async function on_reaction(e){
     const who = e.user
     const to = e.item_user
     const msg_id = e.item.ts
+    const date = new Date(msg_id).toISOString()
+    const yymm = date.slice(0,7); //1970-11
     const p = points[e.reaction] || -1
     if (p < 0 ){
         // early return, reaction was junk
@@ -93,8 +96,15 @@ async function on_reaction(e){
         // put other data
         record.text = text;
         record.chan = chan;
+        record.pk = chan;
+        record.sk = msg_id;
         record.author = to;
-        record.pun_id = msg_id; 
+        record.chan_author = `${chan}:${to}`
+        record.date = date;
+        record.yymm = yymm;
+        record.chan_mo = `${chan}:${yymm}`
+        record.date_punid = `${date}:${msg_id}`
+        record.punid = msg_id; 
         record.votes = {}
     }
     // append vote
