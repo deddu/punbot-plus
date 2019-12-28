@@ -1,8 +1,11 @@
+const { fmt_scores } = require("./fmt_scores");
+
 //api, votes, and aggregations reads 
 const rp = require('request-promise-native');
 const AWS = require('aws-sdk');
 const documentClient = new AWS.DynamoDB.DocumentClient();
-const TABLE = 'punbot-data'
+const VOTESTABLE = process.env.VOTES_TABLE_NAME || "votesstable"
+const SCORESTABLE = process.env.SCORES_TABLE_NAME || "scoresstable"
 const points = {
     zero:0,
     one:1,
@@ -18,13 +21,27 @@ const points = {
 }
 
 const update_record = (chan, who, how_much) => {
+// we want to use a map to store voters. This way only one vote per user is automatic;
+// we need however to keep a track of voters and total score for computing the score.
+// those two sadly don't play well together in case of update, do they.
+// consider the following
+// * a voter has not voted before, but the item has votes
+// * a voter has not voted before, and this is the first vote
+// * a voter has removed his vote
+// * a voter has voted before, and changed his mind
       const params = {
-      TableName: TABLE,
-      Key: { chan : chan },
-      UpdateExpression: 'ADD #a :x',
-      ExpressionAttributeNames: {'#a' : who},
+      TableName: VOTES_TABLE,
+      Key: { pk : `${chan}:${author}`, sk:`${yearmonth}:${punId}` },
+      UpdateExpression: 'SET #votes.#voter = :vote, ADD #voterscount :x, ADD #total :vote ',
+      ExpressionAttributeNames: {
+        '#votes':"votes",
+        '#voter' : voter,
+        '#voterscount':voters_count, //1 new voter, 0 voter update or -1 voter removed
+        '#total': 'totalscore' //
+    },
       ExpressionAttributeValues: {
-        ':x' : how_much,
+        ':vote' : vote,
+        ':x': how_much //1 new voter, 0 voter update or -1 voter removed
       },
       ReturnValues: 'NONE'
     };
@@ -46,36 +63,33 @@ const get_scores = (chan)=>{
         })
 }
 
-const fmt_scores = (scores) => {
-    const fmt_score = (x) => ({
-        type: "section",
-        text: {
-            type:"mrkdwn",
-            text:`<@${x}>: ${scores[x]}`
-        }
-    })
-    const user_scores =  Object.keys(scores)
-        .filter(x=>x!='chan')
-        .map(fmt_score)
-    
-    return [
-        {
-            type: "section",
-            text: {
-                type: "mrkdwn",
-                text: `* <#${scores.chan}> scores:* \t :cookie:|:doughnut:|:beer:|:donutcoin: +1 \t :hankey:|:lemon: -1   `
-            }
-        },
-        {
-            type: "divider"
-        },
-        ... user_scores
-    ]
-
-}
+//TODO: those will be queries, should return promises
+const top10 =()=>"top10"
+const top10Month =(month='current')=>"top10month-"+month
+const top10author = (author) => "top10author-"+author
+const shittiest =()=>"shittiest"
+const shittiestMonth =(month='current')=>"shittiestMonth-"+month
+const shittiestAuthor = (author) => "shittiestAuthor-"+author
+const authorsRankMonth = (month='current')=>"rankmonth"+month
+const authorsRankEver = ()=>"all time author ranks"
 
 async function on_mention( e) {
-    let scores = await get_scores(e.channel);
+    // this will need few routes:
+    const routes = {
+        top10:top10,
+        top10month: top10Month,
+        top10author: top10author,
+        shittiest:shittiest,
+        shittiestAuthor:shittiestAuthor,
+        shittiestMonth:shittiestMonth,
+        authorsRankMonth:authorsRankMonth,
+        authorsRankEver:authorsRankEver
+    }
+    // todo, find out how to fetch the message and parse
+    // 
+    const ask = e.message//parse via regex? extract chart, r
+    let scores = await routes[ask]
+    
     const blocks = fmt_scores(scores)
     let text_slack = await post_block(blocks, e.channel);
     return {message:scores}
@@ -83,6 +97,19 @@ async function on_mention( e) {
 
 
 async function on_reaction(e, sign=1){
+// 1: grab record from DYDB if Exists
+// 2a: if not existing: 
+//        - Call slack to fetch full msg
+//        - Insert new record with vote
+// 2b: if existing
+//       -  append vote data 
+//       -  compute new score
+//       -  update record
+
+   //https://api.slack.com/events/reaction_added
+//    https://api.slack.com/events/message
+//     "ts": "1360782400.498405" is the message id
+// grab message from  GET /api/channels.history?token=TOKEN_WITH_CHANNELS_HISTORY_SCOPE&channel=C2EB2QT8A&latest=1476909142.000007&inclusive=true&count=1
    const where = e.item.channel
    const who = e.user
    const to = e.item_user

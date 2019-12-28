@@ -4,7 +4,7 @@ Description: >
   punbots
 
   SAM Template for punbots. 
-  Creates 3 lambdas, 3 dynamoTables and 2 streams.
+  Creates 4 lambdas, 4 dynamoTables and 3 streams.
   
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -21,17 +21,50 @@ Resources:
       CodeUri: punvote/      
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref PunsTable
+            TableName: !Ref PunsVotesTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref ScoresTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref MonthlyScoresTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref LifetimeScoresTable
       Environment:
         Variables:
-          TABLE_NAME: !Ref PunsTable
+          VOTES_TABLE_NAME: !Ref PunsVotesTable
+          SCORES_TABLE_NAME: !Ref ScoresTable
+          MONTHLY_SCORES_TABLE_NAME: !Ref MonthlyScoresTable
+          LIFE_SCORES_TABLE_NAME: !Ref LifetimeScoresTable
       Events:
         PunVote:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /
+            Path: /punbot
             Method: post
 
+  ScoresFunction:
+    Description: listens on pun stream, aggregates pun scores in monthly averages
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: punsscores/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ScoresTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ScoresTable
+      Events:  
+        VoteStream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt PunsVotesTable.StreamArn
+            BatchSize: 100
+            MaximumRetryAttempts: 2
+            MaximumBatchingWindowInSeconds: 20
+            BisectBatchOnFunctionError: false
+            DestinationConfig:
+              OnFailure:
+                Destination: !GetAtt OhSnapDLQ.Arn
+            StartingPosition: TRIM_HORIZON
 
   ScoresMonthlyFunction:
     Description: listens on pun stream, aggregates pun scores in monthly averages
@@ -40,7 +73,7 @@ Resources:
       CodeUri: punsmonthly/
       Policies:
         - DynamoDBCrudPolicy:
-          TableName: !Ref MonthlyScoresTable
+            TableName: !Ref MonthlyScoresTable
       Environment:
         Variables:
           TABLE_NAME: !Ref MonthlyScoresTable
@@ -48,8 +81,15 @@ Resources:
         VoteStream:
           Type: DynamoDB
           Properties:
-            Stream: !GetAtt PunsTable.StreamArn
+            Stream: !GetAtt ScoresTable.StreamArn
             BatchSize: 100
+            StartingPosition: TRIM_HORIZON
+            MaximumRetryAttempts: 2
+            MaximumBatchingWindowInSeconds: 20
+            BisectBatchOnFunctionError: false
+            DestinationConfig:
+              OnFailure:
+                Destination: !GetAtt OhSnapDLQ.Arn
             StartingPosition: TRIM_HORIZON
 
   ScoresEverFunction:
@@ -59,7 +99,7 @@ Resources:
       CodeUri: punsforever/
       Policies:
         - DynamoDBCrudPolicy:
-          TableName: !Ref LifetimeScoresTable
+            TableName: !Ref LifetimeScoresTable
       Environment:
         Variables:
           TABLE_NAME: !Ref LifetimeScoresTable
@@ -69,10 +109,17 @@ Resources:
           Properties:
             Stream: !GetAtt MonthlyScoresTable.StreamArn
             BatchSize: 100
+            StartingPosition: TRIM_HORIZON
+            MaximumRetryAttempts: 2
+            MaximumBatchingWindowInSeconds: 20
+            BisectBatchOnFunctionError: false
+            DestinationConfig:
+              OnFailure:
+                Destination: !GetAtt OhSnapDLQ.Arn
             StartingPosition: TRIM_HORIZON        
 
 
-  PunsTable:
+  PunsVotesTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
       AttributeDefinitions:
@@ -86,6 +133,29 @@ Resources:
           KeyType: HASH
         - AttributeName: sk
           KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+
+  #   export interface pun_scored  {
+  #     pk: string // chan+author_id
+  #     sk: string // punid
+  #     avg: number // 
+  #     punsScores:Map<pun["msg_id"],pun["score"]>
+  # }      
+  ScoresTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: pk 
+          AttributeType: S
+        - AttributeName: sk 
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE      
       BillingMode: PAY_PER_REQUEST
       GlobalSecondaryIndexes:
         # gsi_author_top10 =    {pk:"chan_author", sk:"date-punId"}
@@ -121,7 +191,6 @@ Resources:
             NonKeyAttributes:
               - text
             ProjectionType: INCLUDE
-        
       StreamSpecification:
         StreamViewType: NEW_IMAGE
 
@@ -134,6 +203,7 @@ Resources:
   MonthlyScoresTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
+      BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: pk 
           AttributeType: S
@@ -146,7 +216,7 @@ Resources:
           KeyType: RANGE      
       StreamSpecification:
         StreamViewType: NEW_IMAGE
-  
+
   #   export interface author_ever  {
   #     pk: string // chan+author_id
   #     // sk:
@@ -156,6 +226,7 @@ Resources:
   LifetimeScoresTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
+      BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: pk 
           AttributeType: S
@@ -163,6 +234,8 @@ Resources:
         - AttributeName: pk
           KeyType: HASH      
 
+  OhSnapDLQ:
+    Type: 'AWS::SQS::Queue'
 
     
   
