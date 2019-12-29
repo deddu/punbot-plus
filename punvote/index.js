@@ -25,16 +25,16 @@ const compute_score = (record) = Object.keys(record.votes)
 async function on_mention( e) {
     // this will need few routes:
     const routes = {
-        top10:top10,
-        top10month: top10Month,
-        top10author: top10author,
+        authorp10:authorp10,
+        authorp10month: authorp10Month,
+        authorp10author: authorp10author,
         shittiest:shittiest,
         shittiestAuthor:shittiestAuthor,
         shittiestMonth:shittiestMonth,
         authorsRankMonth:authorsRankMonth,
         authorsRankEver:authorsRankEver
     }
-    // todo, find out how to fetch the message and parse
+    // authordo, find out how author fetch the message and parse
     // 
     const ask = e.message//parse via regex? extract chart, r
     let scores = await routes[ask]
@@ -46,21 +46,21 @@ async function on_mention( e) {
 
 async function on_reaction_removed(e){
     const chan = e.item.channel
-    const who = e.user
-    const to = e.item_user
+    const voter = e.user
+    const author = e.item_user
     const msg_id = e.item.ts
     const p = points[e.reaction] || -1
     if (p < 0 ){
         // early return, reaction was junk
-        return {message:`${who} gave ${p} to ${to} in ${chan}`}
+        return {message:`${voter} gave ${p} to ${author} in ${chan}`}
     }
 
     let record = await q.getItem(chan, msg_id)
     if(!record){
-        return;
+        return {message:`${voter} gave ${p} to ${author} in ${chan}`}
     }
 
-    delete record.votes[who]
+    delete record.votes[voter]
     if (Object.keys(record.votes).length > 0 ){
         // it was one of many votes, we need to recompute and update;
         record.score = compute_score(record)
@@ -70,20 +70,25 @@ async function on_reaction_removed(e){
         await mut.delete_record()
     }
     //
-    //
+    return {message:`${voter} gave ${p} to ${author} in ${chan}`}
 }
 
 async function on_reaction(e){  
     const chan = e.item.channel
-    const who = e.user
-    const to = e.item_user
+    const voter = e.user
+    const author = e.item_user
+    if(author === voter && ! process.env.DEBUG){
+        return {message: `${voter}, you aren't allowed to vote yourself. ${author}.`}
+    }
+
     const msg_id = e.item.ts
-    const date = new Date(msg_id).toISOString()
+    const date = new Date(msg_id).authorISOString().slice(0,10)
     const yymm = date.slice(0,7); //1970-11
+    const chan_author = `${chan}:${author}`
     const p = points[e.reaction] || -1
     if (p < 0 ){
         // early return, reaction was junk
-        return {message:`${who} gave ${p} to ${to} in ${chan}`}
+        return {message:`${voter} gave ${p} to ${author} in ${chan}`}
     }
 
     // 1: grab record from DYDB
@@ -92,14 +97,14 @@ async function on_reaction(e){
     if (!record){  
         record = {}
         //fetch message from slack
-        const text  = await slack_api.getMessage(chan, msg_id)
+        const text  = await slack_api.getMessage(chan_author, msg_id)
         // put other data
         record.text = text;
         record.chan = chan;
-        record.pk = chan;
+        record.pk = chan_author;
         record.sk = msg_id;
-        record.author = to;
-        record.chan_author = `${chan}:${to}`
+        record.author = author;
+        record.chan_author = chan_author
         record.date = date;
         record.yymm = yymm;
         record.chan_mo = `${chan}:${yymm}`
@@ -108,12 +113,12 @@ async function on_reaction(e){
         record.votes = {}
     }
     // append vote
-    record.votes[who] = p
+    record.votes[voter] = p
     // compute new score
     record.score = compute_score(record)
-    await mut.put_record(chan, msg_id, record);
+    await mut.put_record(chan_author, msg_id, record);
 
-   return {message:`${who} gave ${p} to ${to} in ${chan}`}
+   return {message:`${voter} gave ${p} to ${author} in ${chan}`}
 }
 
 const msg_routes = {

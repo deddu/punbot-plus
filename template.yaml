@@ -94,14 +94,14 @@ Resources:
     Type: 'AWS::DynamoDB::Table'
     Properties:
       AttributeDefinitions:
-        - AttributeName: pk 
+        - AttributeName: pk #chan_author
           AttributeType: S
-        - AttributeName: sk 
+        - AttributeName: sk #msg_id
           AttributeType: S
       KeySchema:
-        - AttributeName: pk
+        - AttributeName: pk #chan_author
           KeyType: HASH
-        - AttributeName: sk
+        - AttributeName: sk #msg_id
           KeyType: RANGE      
       BillingMode: PAY_PER_REQUEST
       GlobalSecondaryIndexes:
@@ -110,11 +110,12 @@ Resources:
           KeySchema:
             - AttributeName: chan_author
               KeyType: HASH
-            - AttributeName: date-punid
+            - AttributeName: score
               KeyType: RANGE
           Projection:
             NonKeyAttributes:
               - text
+              - msg_id
             ProjectionType: INCLUDE
         # gsi_top10_ever = {pk: "chan",sk:"score"}      
         - IndexName: Top10Ever
@@ -126,6 +127,8 @@ Resources:
           Projection:
             NonKeyAttributes:
               - text
+              - chan_author
+              - msg_id
             ProjectionType: INCLUDE
         # gsi_top10_mo = {pk: "chan_date",sk:"score"}
         - IndexName: Top10month
@@ -137,6 +140,8 @@ Resources:
           Projection:
             NonKeyAttributes:
               - text
+              - chan_author
+              - msg_id
             ProjectionType: INCLUDE
       StreamSpecification:
         StreamViewType: NEW_IMAGE
@@ -152,9 +157,9 @@ Resources:
     Properties:
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: pk 
+        - AttributeName: pk #chan_author
           AttributeType: S
-        - AttributeName: sk 
+        - AttributeName: sk #yymm
           AttributeType: S
       KeySchema:
         - AttributeName: pk
@@ -175,10 +180,10 @@ Resources:
     Properties:
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: pk 
+        - AttributeName: pk #chan_author
           AttributeType: S
       KeySchema:
-        - AttributeName: pk
+        - AttributeName: pk #chan_author
           KeyType: HASH      
 
   OhSnapDLQ:
