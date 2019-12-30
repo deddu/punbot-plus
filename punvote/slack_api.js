@@ -6,7 +6,7 @@ function post_block(blk, chan) {
     };
     return post_payload(payload);
 }
-exports.post_block = post_block;
+
 function post_msg(msg, chan) {
     const payload = {
         text: msg,
@@ -14,6 +14,7 @@ function post_msg(msg, chan) {
     };
     return post_payload(payload);
 }
+
 function post_payload(payload) {
     const opts = {
         method: 'POST',
@@ -49,4 +50,11 @@ function get_message(chan,ts){
         json: true
     };
     return rp(opts);
+}
+
+module.exports = {
+    get_message,
+    post_block,
+    post_payload,
+    post_msg
 }

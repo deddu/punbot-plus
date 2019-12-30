@@ -1,4 +1,4 @@
-const { post_block } = require("./slack_api");
+const slack_api = require("./slack_api");
 
 const { fmt_scores } = require("./fmt_scores");
 const q = require('./queries');
@@ -19,8 +19,11 @@ const points = {
     ten:10
 }
 
-const compute_score = (record) = Object.keys(record.votes)
-    .reduce((x,acc)=>record.votes[x]+acc,0) / (votes.length + 1)
+const compute_score = (record) => {
+    const keys = Object.keys(record.votes)
+    const tot =  keys.reduce((acc,x) => record.votes[x]+ acc, 0)
+    return tot / (keys.length)
+}
 
 const tokenizer  = /(?<cmd>top10|shit|rank)\s(?<what>(?<ever>ever)|<@(?<author>\S*)>|(?<date>\d{4}-\d{2}))/gi
 const tokenize = (s) => [... s.matchAll(tokenizer)].map(x=>x.groups)[0]
@@ -68,7 +71,7 @@ async function on_mention( e) {
 
     
     const blocks = fmt_scores(scores)
-    let text_slack = await post_block(blocks, e.channel);
+    let text_slack = await slack_api.post_block(blocks, e.channel);
     return {message:scores}
 }
 
@@ -84,7 +87,7 @@ async function on_reaction_removed(e){
         return {message:`${voter} gave ${p} to ${author} in ${chan}`}
     }
 
-    let record = await q.getItem(chan, msg_id)
+    let record = await q.getMsg(chan, msg_id)
     if(!record){
         return {message:`${voter} gave ${p} to ${author} in ${chan}`}
     }
@@ -111,7 +114,7 @@ async function on_reaction(e){
     }
 
     const msg_id = e.item.ts
-    const date = new Date(msg_id).authorISOString().slice(0,10)
+    const date = new Date(Number(msg_id)).toISOString().slice(0,10)
     const yymm = date.slice(0,7); //1970-11
     const chan_author = `${chan}:${author}`
     const p = points[e.reaction] || -1
@@ -121,12 +124,14 @@ async function on_reaction(e){
     }
 
     // 1: grab record from DYDB
-    let record = await q.getItem(chan, msg_id)
+    let record = await q.getMsg(chan, msg_id)
     //if not existing, we initialize it;
+    console.log('found ',record)
     if (!record){  
+        console.log('initializing')
         record = {}
         //fetch message from slack
-        const text  = await slack_api.getMessage(chan_author, msg_id)
+        const text  = await slack_api.get_message(chan_author, msg_id)
         // put other data
         record.text = text;
         record.chan = chan;
@@ -143,8 +148,11 @@ async function on_reaction(e){
     }
     // append vote
     record.votes[voter] = p
+
+    console.log('record:',record)
     // compute new score
     record.score = compute_score(record)
+    console.log('scored record:',record)
     await mut.put_record(record);
 
    return {message:`${voter} gave ${p} to ${author} in ${chan}`}
@@ -167,15 +175,25 @@ const build_response = o => ({
     
     
 exports.handler = async (event) => {
-    const slack_raw = JSON.parse(event.body)
+    const body = JSON.parse(event.body)
+    const slack_raw = body.body
+    
     let resp;
-    if ('event_callback' == slack_raw.type ) {
-        //the event is wrapped in metadata
-        const slack_evt = slack_raw.event;
-         resp = await msg_routes[slack_evt.type](slack_evt)
-    }
-    else if ('url_verification' == slack_raw.type){
-        resp = {challenge: slack_raw.challenge}
+    switch (slack_raw.type) {
+        case 'event_callback' :{
+            //the event is wrapped in metadata
+            const slack_evt = slack_raw.event;
+            resp = await msg_routes[slack_evt.type](slack_evt)
+            break;
+        }
+        case 'url_verification':{
+            console.log('here')
+            resp = {challenge: slack_raw.challenge}
+            break;
+        }
+        default:{
+            console.log(slack_raw)
+        }
     }
     
     return build_response(resp);

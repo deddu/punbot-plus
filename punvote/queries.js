@@ -5,7 +5,7 @@ const VOTESSTABLE = process.env.VOTES_TABLE_NAME || "votesstable"
 const MONTHLY_SCORES_TABLE = process.env.MONTHLY_SCORES_TABLE_NAME || "monthlyscoresstable"
 const LIFE_SCORES_TABLE = process.env.LIFE_SCORES_TABLE_NAME || "lifescoresstable"
 
-function getMsg (chan_author, msg_id){
+async function getMsg (chan_author, msg_id){
     const params = {
         TableName: VOTESSTABLE,
         Key: { pk:chan_author,
@@ -16,11 +16,11 @@ function getMsg (chan_author, msg_id){
         .then( x => x.Item)
         .catch(e => {
             console.error(e);
-            return {}
+            return 
         })
 }
 
-function top10Ever (chan){
+async function top10Ever (chan){
     const params = {
         TableName: VOTESSTABLE,
         IndexName: "Top10Ever",
@@ -40,7 +40,7 @@ function top10Ever (chan){
         })
 }
 
-function shittiestEver(chan){
+async function shittiestEver(chan){
     const params = {
         TableName: VOTESSTABLE,
         IndexName: "Top10Ever",
@@ -59,7 +59,7 @@ function shittiestEver(chan){
         })
 }
 
-function top10Author (author){
+async function top10Author (author){
     const params = {
         TableName: VOTESSTABLE,
         IndexName: "AuthorsTop10",
@@ -79,7 +79,7 @@ function top10Author (author){
         })
 }
 
-function shittiestAuthor (author){
+async function shittiestAuthor (author){
     const params = {
         TableName: VOTESSTABLE,
         IndexName: "AuthorsTop10",
@@ -98,7 +98,7 @@ function shittiestAuthor (author){
         })
 }
 
-function top10Month (chan, yymm){
+async function top10Month (chan, yymm){
     const params = {
         TableName: VOTESSTABLE,
         IndexName: "Top10month",
@@ -118,7 +118,7 @@ function top10Month (chan, yymm){
         })
 }
 
-function shittiestMonth (chan, yymm){
+async function shittiestMonth (chan, yymm){
     const params = {
         TableName: VOTESSTABLE,
         IndexName: "Top10month",
@@ -137,7 +137,7 @@ function shittiestMonth (chan, yymm){
         })
 }
 
-function authorsRankMonth (chan, yymm){
+async function authorsRankMonth (chan, yymm){
     const params = {
         TableName: MONTHLY_SCORES_TABLE,
         Key:{ pk:`${chan}:${yymm}`}
@@ -151,7 +151,7 @@ function authorsRankMonth (chan, yymm){
         })
 }
 
-function authorsRankEver (chan){
+async function authorsRankEver (chan){
     const params = {
         TableName: LIFE_SCORES_TABLE_NAME,
         Key:{ pk:chan}
@@ -166,7 +166,7 @@ function authorsRankEver (chan){
 }
 
 
-module.export = {
+module.exports = {
     getMsg,
     top10Ever,
     top10Author,

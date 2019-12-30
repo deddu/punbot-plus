@@ -35,6 +35,11 @@ const delete_record = (chan_author, msgId)=>{
         })
 };
 
+module.exports = {
+    put_record,
+    delete_record
+}
+
 // const update_record = (chan, who, how_much) => {
 //     // we want to use a map to store voters. This way only one vote per user can be recorded by design.
 //     // we need however to keep a track of voters and total score for computing the score.
