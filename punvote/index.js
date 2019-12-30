@@ -22,7 +22,7 @@ const points = {
 const compute_score = (record) = Object.keys(record.votes)
     .reduce((x,acc)=>record.votes[x]+acc,0) / (votes.length + 1)
 
-const tokenizer  = /(?<cmd>top10|shit|rank)\s(?<what>(?<ever>ever)|(?<author><@\S*>)|(?<date>\d{4}-\d{2}))/gi
+const tokenizer  = /(?<cmd>top10|shit|rank)\s(?<what>(?<ever>ever)|<@(?<author>\S*)>|(?<date>\d{4}-\d{2}))/gi
 const tokenize = (s) => [... s.matchAll(tokenizer)].map(x=>x.groups)[0]
 
 
