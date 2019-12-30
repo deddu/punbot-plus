@@ -3,8 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   punbots
 
-  SAM Template for punbots. 
-  Creates 4 lambdas, 4 dynamoTables and 3 streams.
+  SAM Template for punbots.
   
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -98,6 +97,14 @@ Resources:
           AttributeType: S
         - AttributeName: sk #msg_id
           AttributeType: S
+        - AttributeName: chan
+          AttributeType: S
+        - AttributeName: chan_author
+          AttributeType: S
+        - AttributeName: chan_yymm
+          AttributeType: S
+        - AttributeName: score
+          AttributeType: "N"
       KeySchema:
         - AttributeName: pk #chan_author
           KeyType: HASH
@@ -133,7 +140,7 @@ Resources:
         # gsi_top10_mo = {pk: "chan_date",sk:"score"}
         - IndexName: Top10month
           KeySchema:
-            - AttributeName: chan_mo
+            - AttributeName: chan_yymm
               KeyType: HASH
             - AttributeName: score
               KeyType: RANGE
@@ -199,7 +206,7 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   PunVoteApi:
     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/punbot/"
   PunVoteFunction:
     Description: "Hello World Lambda Function ARN"
     Value: !GetAtt PunVoteFunction.Arn

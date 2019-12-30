@@ -115,7 +115,7 @@ async function on_reaction(e){
     }
 
     const msg_id = e.item.ts
-    const date = new Date(Number(msg_id) * 1000).toISOString().slice(0,10)
+    const date = new Date(Number(msg_id)).toISOString().slice(0,10)
     const yymm = date.slice(0,7); //1970-11
     const chan_author = `${chan}:${author}`
     const p = points[e.reaction] || -1

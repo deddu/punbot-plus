@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'punbots
+
+  SAM Template for punbots.
+
+  '
+Globals:
+  Function:
+    Timeout: 3
+    Handler: index.handler
+    Runtime: nodejs12.x
+Resources:
+  PunVoteFunction:
+    Description: Basic bot entry point. It records puns and Votes in DynamoDB, and
+      some queries
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: PunVoteFunction
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: PunsVotesTable
+      Environment:
+        Variables:
+          VOTES_TABLE_NAME:
+            Ref: PunsVotesTable
+      Events:
+        PunVote:
+          Type: Api
+          Properties:
+            Path: /punbot
+            Method: post
+  PunsVotesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: pk
+        AttributeType: S
+      - AttributeName: sk
+        AttributeType: S
+      - AttributeName: chan
+        AttributeType: S
+      - AttributeName: chan_author
+        AttributeType: S
+      - AttributeName: chan_yymm
+        AttributeType: S
+      - AttributeName: score
+        AttributeType: N
+      KeySchema:
+      - AttributeName: pk
+        KeyType: HASH
+      - AttributeName: sk
+        KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+      - IndexName: AuthorsTop10
+        KeySchema:
+        - AttributeName: chan_author
+          KeyType: HASH
+        - AttributeName: score
+          KeyType: RANGE
+        Projection:
+          NonKeyAttributes:
+          - text
+          - msg_id
+          ProjectionType: INCLUDE
+      - IndexName: Top10Ever
+        KeySchema:
+        - AttributeName: chan
+          KeyType: HASH
+        - AttributeName: score
+          KeyType: RANGE
+        Projection:
+          NonKeyAttributes:
+          - text
+          - chan_author
+          - msg_id
+          ProjectionType: INCLUDE
+      - IndexName: Top10month
+        KeySchema:
+        - AttributeName: chan_yymm
+          KeyType: HASH
+        - AttributeName: score
+          KeyType: RANGE
+        Projection:
+          NonKeyAttributes:
+          - text
+          - chan_author
+          - msg_id
+          ProjectionType: INCLUDE
+  OhSnapDLQ:
+    Type: AWS::SQS::Queue
+Outputs:
+  PunVoteApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/punbot/
+  PunVoteFunction:
+    Description: Hello World Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - PunVoteFunction
+      - Arn
+  PunVoteFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value:
+      Fn::GetAtt:
+      - PunVoteFunctionRole
+      - Arn
