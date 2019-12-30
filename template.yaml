@@ -146,41 +146,43 @@ Resources:
       StreamSpecification:
         StreamViewType: NEW_IMAGE
 
-  #   export interface author_monthly  {
-  #     pk: string // chan+author_id
-  #     sk: string // year-month
-  #     avg: number // 
-  #     punsScores:Map<pun["msg_id"],pun["score"]>
-  # }      
+      
+  # {
+  #   pk: chan_yymm
+  #   authors : {
+  #     author_id:{
+  #       avg:number,
+  #       punsScores: { punId:number }
+  #       }
+  #   }
+  # }
   MonthlyScoresTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: pk #chan_author
-          AttributeType: S
-        - AttributeName: sk #yymm
+        - AttributeName: pk #chan_mo
           AttributeType: S
       KeySchema:
         - AttributeName: pk
           KeyType: HASH
-        - AttributeName: sk
-          KeyType: RANGE      
       StreamSpecification:
         StreamViewType: NEW_IMAGE
-
-  #   export interface author_ever  {
-  #     pk: string // chan+author_id
-  #     // sk:
-  #     avg: number // 
-  #     punsScores:Map<string,author_monthly["avg"]> // author_montly["pk"]+author_monthly["sk"]
-  # }      
+  
+  # { pk: chan,
+  #   authors:{
+  #     author_id:{
+  #       avg:number,
+  #       yymm:number
+  #     }
+  #   }
+  # }
   LifetimeScoresTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: pk #chan_author
+        - AttributeName: pk #chan
           AttributeType: S
       KeySchema:
         - AttributeName: pk #chan_author
