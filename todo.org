@@ -1,0 +1,5 @@
+* TODO score fmt messages
+* TODO info messages
+* TODO add aggregations lambdas
+* TODO clean up message storage (save only text, or link)
+** consider using permalink instead of full text https://api.slack.com/methods/chat.getPermalink

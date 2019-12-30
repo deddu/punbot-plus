@@ -70,7 +70,23 @@ async function on_mention( e) {
 
     let scores = await op()
     console.log(scores)
-
+    // [
+    //     {
+    //       sk: '1577740115.003800',
+    //       score: 7,
+    //       chan_author: 'CPRR5AD08:U09EZ7Z2R',
+    //       text: {
+    //         channel_actions_count: 0,
+    //         messages: [Array],
+    //         is_limited: false,
+    //         has_more: true,
+    //         channel_actions_ts: null,
+    //         ok: true,
+    //         latest: '1577740115.003800'
+    //       },
+    //       pk: 'CPRR5AD08:U09EZ7Z2R'
+    //     }
+    //   ]
     
     const blocks = fmt_scores(scores)
     let text_slack = await slack_api.post_block(blocks, e.channel);
