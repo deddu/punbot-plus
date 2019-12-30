@@ -31,6 +31,7 @@ const tokenize = (s) => [... s.matchAll(tokenizer)].map(x=>x.groups)[0]
 
 async function on_mention( e) {
     console.log('on_mention', e)
+    const chan = e.channel
     const tokens = tokenize(e.text);
     if(!tokens){
         //early out, wrong ask
@@ -41,28 +42,28 @@ async function on_mention( e) {
     switch (tokens.cmd) {
         case 'top10':{
             if (tokens.ever ){
-                op = q.top10Ever
+                op = ()=> q.top10Ever(chan)
             } else if (tokens.author){
-                op = ()=>q.top10Author(tokens.author)
+                op = ()=>q.top10Author(chan, tokens.author)
             } else if (tokens.date){
-                op = ()=>q.top10Month(tokens.date)
+                op = ()=>q.top10Month(chan, tokens.date)
             }
             break
         }
         case 'shit':{
             if (tokens.ever ){
-                op = q.shittiestEver
+                op = ()=>q.shittiestEver(chan)
             } else if (tokens.author){
-                op = () => q.shittiestAuthor(tokens.author)
+                op = () => q.shittiestAuthor(chan, tokens.author)
             } else if (tokens.date){
-                op = () => q.shittiestMonth(tokens.date)
+                op = () => q.shittiestMonth(chan, tokens.date)
             }
         }
         case 'rank':{
             if (tokens.ever ){
-                op = q.authorsRankEver
+                op = ()=>q.authorsRankEver(chan)
             } else if (tokens.date){
-                op = ()=>q.authorsRankMonth(tokens.date)
+                op = ()=>q.authorsRankMonth(chan, tokens.date)
             }
         }
     }
@@ -115,7 +116,7 @@ async function on_reaction(e){
     }
 
     const msg_id = e.item.ts
-    const date = new Date(Number(msg_id)).toISOString().slice(0,10)
+    const date = new Date(Number(msg_id) * 1000).toISOString().slice(0,10)
     const yymm = date.slice(0,7); //1970-11
     const chan_author = `${chan}:${author}`
     const p = points[e.reaction] || -1
@@ -132,7 +133,7 @@ async function on_reaction(e){
         console.log('initializing')
         record = {}
         //fetch message from slack
-        const text  = await slack_api.get_message(chan_author, msg_id)
+        const text  = await slack_api.get_message(chan, msg_id)
         // put other data
         record.text = text;
         record.chan = chan;

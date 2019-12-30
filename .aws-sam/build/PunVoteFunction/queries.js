@@ -26,9 +26,9 @@ async function top10Ever (chan){
         IndexName: "Top10Ever",
         ScanIndexForward: false,
         Limit:10,
-        KeyConditionExpression: 'pk = :hkey',
+        KeyConditionExpression: 'chan = :chan',
         ExpressionAttributeValues: {
-          ':hkey': chan,
+          ':chan': chan,
         }
     }
     return documentClient.query(params)
@@ -45,9 +45,9 @@ async function shittiestEver(chan){
         TableName: VOTESSTABLE,
         IndexName: "Top10Ever",
         Limit:1,
-        KeyConditionExpression: 'pk = :hkey',
+        KeyConditionExpression: 'chan = :chan',
         ExpressionAttributeValues: {
-          ':hkey': chan,
+          ':chan': chan,
         }
     }
     return documentClient.query(params)
@@ -59,15 +59,15 @@ async function shittiestEver(chan){
         })
 }
 
-async function top10Author (author){
+async function top10Author (chan, author){
     const params = {
         TableName: VOTESSTABLE,
         IndexName: "AuthorsTop10",
         ScanIndexForward: false,
         Limit:10,
-        KeyConditionExpression: 'pk = :hkey',
+        KeyConditionExpression: 'chan_author = :hkey',
         ExpressionAttributeValues: {
-          ':hkey': 'key',
+          ':hkey': `${chan}:${author}`
         }
     }
     return documentClient.query(params)
@@ -79,14 +79,14 @@ async function top10Author (author){
         })
 }
 
-async function shittiestAuthor (author){
+async function shittiestAuthor (chan, author){
     const params = {
         TableName: VOTESSTABLE,
         IndexName: "AuthorsTop10",
         Limit:1,
-        KeyConditionExpression: 'pk = :hkey',
+        KeyConditionExpression: 'chan_author = :hkey',
         ExpressionAttributeValues: {
-          ':hkey': 'key',
+          ':hkey':  `${chan}:${author}`
         }
     }
     return documentClient.query(params)
@@ -104,7 +104,7 @@ async function top10Month (chan, yymm){
         IndexName: "Top10month",
         ScanIndexForward: false,
         Limit:10,
-        KeyConditionExpression: 'pk = :hkey',
+        KeyConditionExpression: 'chan_yymm = :hkey',
         ExpressionAttributeValues: {
           ':hkey': `${chan}:${yymm}`,
         }
@@ -123,7 +123,7 @@ async function shittiestMonth (chan, yymm){
         TableName: VOTESSTABLE,
         IndexName: "Top10month",
         Limit:1,
-        KeyConditionExpression: 'pk = :hkey',
+        KeyConditionExpression: 'chan_yymm = :hkey',
         ExpressionAttributeValues: {
           ':hkey': `${chan}:${yymm}`,
         }
