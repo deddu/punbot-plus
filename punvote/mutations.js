@@ -3,8 +3,37 @@ const documentClient = new AWS.DynamoDB.DocumentClient();
 
 const VOTESTABLE = process.env.VOTES_TABLE_NAME || "votesstable"
 
-const put_record = (chan,msgId,record)=>{};
-const delete_record = (chan,msgId)=>{};
+const put_record = (record)=>{
+    const params = {
+        TableName: VOTESTABLE,
+        Item:record
+    }
+    return documentClient.put(params)
+        .promise()
+        .then( x => x)
+        .catch(e => {
+            console.error(e);
+            return {}
+        })
+};
+
+
+const delete_record = (chan_author, msgId)=>{
+    const params = {
+        TableName: VOTESTABLE,
+        Key: {
+            pk: chan_author,
+            sk: msgId
+          }
+    }
+    return documentClient.delete(params)
+        .promise()
+        .then( x => x)
+        .catch(e => {
+            console.error(e);
+            return {}
+        })
+};
 
 // const update_record = (chan, who, how_much) => {
 //     // we want to use a map to store voters. This way only one vote per user can be recorded by design.

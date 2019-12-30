@@ -7,7 +7,7 @@ const LIFE_SCORES_TABLE = process.env.LIFE_SCORES_TABLE_NAME || "lifescoresstabl
 
 function getMsg (chan_author, msg_id){
     const params = {
-        TableName: VOTESTABLE,
+        TableName: VOTESSTABLE,
         Key: { pk:chan_author,
             sk:msg_id}
     }
@@ -22,7 +22,7 @@ function getMsg (chan_author, msg_id){
 
 function top10Ever (chan){
     const params = {
-        TableName: VOTESTABLE,
+        TableName: VOTESSTABLE,
         IndexName: "Top10Ever",
         ScanIndexForward: false,
         Limit:10,
@@ -42,7 +42,7 @@ function top10Ever (chan){
 
 function shittiestEver(chan){
     const params = {
-        TableName: VOTESTABLE,
+        TableName: VOTESSTABLE,
         IndexName: "Top10Ever",
         Limit:1,
         KeyConditionExpression: 'pk = :hkey',
@@ -61,7 +61,7 @@ function shittiestEver(chan){
 
 function top10Author (author){
     const params = {
-        TableName: VOTESTABLE,
+        TableName: VOTESSTABLE,
         IndexName: "AuthorsTop10",
         ScanIndexForward: false,
         Limit:10,
@@ -81,7 +81,7 @@ function top10Author (author){
 
 function shittiestAuthor (author){
     const params = {
-        TableName: VOTESTABLE,
+        TableName: VOTESSTABLE,
         IndexName: "AuthorsTop10",
         Limit:1,
         KeyConditionExpression: 'pk = :hkey',
@@ -100,7 +100,7 @@ function shittiestAuthor (author){
 
 function top10Month (chan, yymm){
     const params = {
-        TableName: VOTESTABLE,
+        TableName: VOTESSTABLE,
         IndexName: "Top10month",
         ScanIndexForward: false,
         Limit:10,
@@ -120,7 +120,7 @@ function top10Month (chan, yymm){
 
 function shittiestMonth (chan, yymm){
     const params = {
-        TableName: VOTESTABLE,
+        TableName: VOTESSTABLE,
         IndexName: "Top10month",
         Limit:1,
         KeyConditionExpression: 'pk = :hkey',
@@ -153,7 +153,7 @@ function authorsRankMonth (chan, yymm){
 
 function authorsRankEver (chan){
     const params = {
-        TableName: MONTHLY_SCORES_TABLE,
+        TableName: LIFE_SCORES_TABLE_NAME,
         Key:{ pk:chan}
     }
     return documentClient.get(params)

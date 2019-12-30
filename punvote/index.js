@@ -22,22 +22,50 @@ const points = {
 const compute_score = (record) = Object.keys(record.votes)
     .reduce((x,acc)=>record.votes[x]+acc,0) / (votes.length + 1)
 
+const tokenizer  = /(?<cmd>top10|shit|rank)\s(?<what>(?<ever>ever)|(?<author><@\S*>)|(?<date>\d{4}-\d{2}))/gi
+const tokenize = (s) => [... s.matchAll(tokenizer)].map(x=>x.groups)[0]
+
+
 async function on_mention( e) {
-    // this will need few routes:
-    const routes = {
-        authorp10:authorp10,
-        authorp10month: authorp10Month,
-        authorp10author: authorp10author,
-        shittiest:shittiest,
-        shittiestAuthor:shittiestAuthor,
-        shittiestMonth:shittiestMonth,
-        authorsRankMonth:authorsRankMonth,
-        authorsRankEver:authorsRankEver
+    const tokens = tokenize(e.message);
+    if(!tokens){
+        //early out, wrong ask
+        return {message:"wrong request"}
     }
-    // authordo, find out how author fetch the message and parse
-    // 
-    const ask = e.message//parse via regex? extract chart, r
-    let scores = await routes[ask]
+    
+    let op;
+    switch (tokens.cmd) {
+        case 'top10':{
+            if (tokens.ever ){
+                op = q.top10Ever
+            } else if (tokens.author){
+                op = ()=>q.top10Author(tokens.author)
+            } else if (tokens.date){
+                op = ()=>q.top10Month(tokens.date)
+            }
+            break
+        }
+        case 'shit':{
+            if (tokens.ever ){
+                op = q.shittiestEver
+            } else if (tokens.author){
+                op = () => q.shittiestAuthor(tokens.author)
+            } else if (tokens.date){
+                op = () => q.shittiestMonth(tokens.date)
+            }
+        }
+        case 'rank':{
+            if (tokens.ever ){
+                op = q.authorsRankEver
+            } else if (tokens.date){
+                op = ()=>q.authorsRankMonth(tokens.date)
+            }
+        }
+    }
+
+    let scores = await op()
+    console.log(scores)
+
     
     const blocks = fmt_scores(scores)
     let text_slack = await post_block(blocks, e.channel);
@@ -49,6 +77,7 @@ async function on_reaction_removed(e){
     const voter = e.user
     const author = e.item_user
     const msg_id = e.item.ts
+    const chan_author = `${chan}:${author}`
     const p = points[e.reaction] || -1
     if (p < 0 ){
         // early return, reaction was junk
@@ -64,10 +93,10 @@ async function on_reaction_removed(e){
     if (Object.keys(record.votes).length > 0 ){
         // it was one of many votes, we need to recompute and update;
         record.score = compute_score(record)
-        await mut.put_record(chan, msg_id, record);
+        await mut.put_record(record);
     } else {
         //this was the only vote. so we can delete the pun;
-        await mut.delete_record()
+        await mut.delete_record(chan_author,msg_id)
     }
     //
     return {message:`${voter} gave ${p} to ${author} in ${chan}`}
@@ -116,7 +145,7 @@ async function on_reaction(e){
     record.votes[voter] = p
     // compute new score
     record.score = compute_score(record)
-    await mut.put_record(chan_author, msg_id, record);
+    await mut.put_record(record);
 
    return {message:`${voter} gave ${p} to ${author} in ${chan}`}
 }

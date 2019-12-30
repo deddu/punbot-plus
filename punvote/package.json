@@ -7,9 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "aws-sdk": "latest",
     "request": "^2.88.0",
-    "request-promise-native": "^1.0.7",
-    "aws-sdk":"latest"
+    "request-promise-native": "^1.0.7"
   },
   "author": "Andrea Cadeddu",
   "license": "ISC"
