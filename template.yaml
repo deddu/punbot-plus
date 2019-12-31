@@ -37,57 +37,56 @@ Resources:
             Path: /punbot
             Method: post
 
-  # ScoresMonthlyFunction:
-  #   Description: listens on pun stream, aggregates pun scores in monthly averages
-  #   Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-  #   Properties:
-  #     CodeUri: punsmonthly/
-  #     Policies:
-  #       - DynamoDBCrudPolicy:
-  #           TableName: !Ref MonthlyScoresTable
-  #     Environment:
-  #       Variables:
-  #         TABLE_NAME: !Ref MonthlyScoresTable
-  #     Events:  
-  #       VoteStream:
-  #         Type: DynamoDB
-  #         Properties:
-  #           Stream: !GetAtt PunsVotesTable.StreamArn
-  #           BatchSize: 100
-  #           StartingPosition: TRIM_HORIZON
-  #           MaximumRetryAttempts: 2
-  #           MaximumBatchingWindowInSeconds: 20
-  #           BisectBatchOnFunctionError: false
-  #           DestinationConfig:
-  #             OnFailure:
-  #               Destination: !GetAtt OhSnapDLQ.Arn
-  #           StartingPosition: TRIM_HORIZON
+  ScoresMonthlyFunction:
+    Description: listens on pun stream, aggregates pun scores in monthly averages
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: punsmonthly/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MonthlyScoresTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref MonthlyScoresTable
+      Events:  
+        VoteStream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt PunsVotesTable.StreamArn
+            BatchSize: 100
+            StartingPosition: TRIM_HORIZON
+            MaximumRetryAttempts: 2
+            MaximumBatchingWindowInSeconds: 20
+            BisectBatchOnFunctionError: false
+            DestinationConfig:
+              OnFailure:
+                Destination: !GetAtt OhSnapDLQ.Arn
+            StartingPosition: LATEST
 
-  # ScoresEverFunction:
-  #   Description: listen on monthly stream, aggregates monthly scores into lifetime scores
-  #   Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-  #   Properties:
-  #     CodeUri: punsforever/
-  #     Policies:
-  #       - DynamoDBCrudPolicy:
-  #           TableName: !Ref LifetimeScoresTable
-  #     Environment:
-  #       Variables:
-  #         TABLE_NAME: !Ref LifetimeScoresTable
-  #     Events:  
-  #       VoteStream:
-  #         Type: DynamoDB
-  #         Properties:
-  #           Stream: !GetAtt MonthlyScoresTable.StreamArn
-  #           BatchSize: 100
-  #           StartingPosition: TRIM_HORIZON
-  #           MaximumRetryAttempts: 2
-  #           MaximumBatchingWindowInSeconds: 20
-  #           BisectBatchOnFunctionError: false
-  #           DestinationConfig:
-  #             OnFailure:
-  #               Destination: !GetAtt OhSnapDLQ.Arn
-  #           StartingPosition: TRIM_HORIZON        
+  ScoresEverFunction:
+    Description: listen on monthly stream, aggregates monthly scores into lifetime scores
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: punsforever/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref LifetimeScoresTable
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref LifetimeScoresTable
+      Events:  
+        VoteStream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt MonthlyScoresTable.StreamArn
+            BatchSize: 100
+            MaximumRetryAttempts: 2
+            MaximumBatchingWindowInSeconds: 20
+            BisectBatchOnFunctionError: false
+            DestinationConfig:
+              OnFailure:
+                Destination: !GetAtt OhSnapDLQ.Arn
+            StartingPosition: LATEST        
 
   PunsVotesTable:
     Type: 'AWS::DynamoDB::Table'
@@ -148,50 +147,50 @@ Resources:
               - text
               - link
             ProjectionType: INCLUDE
-      # StreamSpecification:
-      #   StreamViewType: NEW_IMAGE
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
 
       
-  # # {
-  # #   pk: chan_yymm
-  # #   authors : {
-  # #     author_id:{
-  # #       avg:number,
-  # #       punsScores: { punId:number }
-  # #       }
-  # #   }
-  # # }
-  # MonthlyScoresTable:
-  #   Type: 'AWS::DynamoDB::Table'
-  #   Properties:
-  #     BillingMode: PAY_PER_REQUEST
-  #     AttributeDefinitions:
-  #       - AttributeName: pk #chan_mo
-  #         AttributeType: S
-  #     KeySchema:
-  #       - AttributeName: pk
-  #         KeyType: HASH
-  #     StreamSpecification:
-  #       StreamViewType: NEW_IMAGE
+  # {
+  #   pk: chan_yymm
+  #   authors : {
+  #     author_id:{
+  #       avg:number,
+  #       punsScores: { punId:number }
+  #       }
+  #   }
+  # }
+  MonthlyScoresTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk #chan_mo
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
   
-  # # { pk: chan,
-  # #   authors:{
-  # #     author_id:{
-  # #       avg:number,
-  # #       yymm:number
-  # #     }
-  # #   }
-  # # }
-  # LifetimeScoresTable:
-  #   Type: 'AWS::DynamoDB::Table'
-  #   Properties:
-  #     BillingMode: PAY_PER_REQUEST
-  #     AttributeDefinitions:
-  #       - AttributeName: pk #chan
-  #         AttributeType: S
-  #     KeySchema:
-  #       - AttributeName: pk #chan_author
-  #         KeyType: HASH      
+  # { pk: chan,
+  #   authors:{
+  #     author_id:{
+  #       avg:number,
+  #       yymm:number
+  #     }
+  #   }
+  # }
+  LifetimeScoresTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk #chan
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk #chan
+          KeyType: HASH      
 
   OhSnapDLQ:
     Type: 'AWS::SQS::Queue'

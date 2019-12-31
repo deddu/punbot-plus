@@ -1,15 +1,14 @@
 {
-  "name": "punbot-bot",
+  "name": "punbot-bot-aggregates-monthly",
   "version": "1.0.0",
-  "description": "pun voting slack bot",
+  "description": "monthly aggregations for punbot",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.7",
-    "aws-sdk":"latest"
+    "aws-sdk": "latest",
+    "ramda": "latest"
   },
   "author": "Andrea Cadeddu",
   "license": "ISC"

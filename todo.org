@@ -1,5 +1,8 @@
-* TODO info messages
-* TODO add aggregations lambdas
+* DONE info messages
 * DONE score fmt messages
 * DONE clean up message storage (save only text, or link)
 ** consider using permalink instead of full text https://api.slack.com/methods/chat.getPermalink
+* TODO add aggregations lambdas
+    - update template with new functions/tables
+    - update message with rank verbage
+    - compute score 

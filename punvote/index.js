@@ -16,7 +16,7 @@ const points = {
     seven:7,
     eight:8,
     nine:9,
-    ten:10
+    keycap_ten:10
 }
 
 const compute_score = (record) => {
