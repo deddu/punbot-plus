@@ -1,6 +1,6 @@
 const slack_api = require("./slack_api");
 
-const { fmt_scores } = require("./fmt_scores");
+const fmt = require("./fmt_scores");
 const q = require('./queries');
 const mut = require('./mutations');
 
@@ -88,9 +88,9 @@ async function on_mention( e) {
     //     }
     //   ]
     
-    const blocks = fmt_scores(scores)
-    let text_slack = await slack_api.post_block(blocks, e.channel);
-    return {message:scores}
+    const blocks = fmt.fmt_shit(scores)
+    let text_slack = await slack_api.post_block(blocks, chan);
+    return {message:scores, text_slack}
 }
 
 async function on_reaction_removed(e){
@@ -149,9 +149,11 @@ async function on_reaction(e){
         console.log('initializing')
         record = {}
         //fetch message from slack
-        const text  = await slack_api.get_message(chan, msg_id)
+        const link  = await slack_api.get_message_link(chan, msg_id)
+        const text = await slack_api.get_message(chan, msg_id)
         // put other data
         record.text = text;
+        record.link = link;
         record.chan = chan;
         record.pk = chan_author;
         record.sk = msg_id;

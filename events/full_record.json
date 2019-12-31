@@ -1,0 +1,65 @@
+{
+    "author": "U09EZ7Z2R",
+    "chan": "CPRR5AD08",
+    "chan_author": "CPRR5AD08:U09EZ7Z2R",
+    "chan_mo": "CPRR5AD08:2019-12",
+    "date": "2019-12-30",
+    "date_punid": "2019-12-30:1577741241.005000",
+    "link": "https://thefrathouse.slack.com/archives/CPRR5AD08/p1577741241005000",
+    "pk": "CPRR5AD08:U09EZ7Z2R",
+    "punid": "1577741241.005000",
+    "score": 3,
+    "sk": "1577741241.005000",
+    "text": {
+      "channel_actions_count": 0,
+      "channel_actions_ts": null,
+      "has_more": true,
+      "is_limited": false,
+      "latest": "1577741241.005000",
+      "messages": [
+        {
+          "blocks": [
+            {
+              "block_id": "tk7U",
+              "elements": [
+                {
+                  "elements": [
+                    {
+                      "type": "user",
+                      "user_id": "US5E2MC1K"
+                    },
+                    {
+                      "text": " gimme top10 ever",
+                      "type": "text"
+                    }
+                  ],
+                  "type": "rich_text_section"
+                }
+              ],
+              "type": "rich_text"
+            }
+          ],
+          "client_msg_id": "788f516f-7940-49a3-8bc3-ffe7df5f60aa",
+          "reactions": [
+            {
+              "count": 1,
+              "name": "three",
+              "users": [
+                "U09EZ7Z2R"
+              ]
+            }
+          ],
+          "team": "T08QSPW4E",
+          "text": "<@US5E2MC1K> gimme top10 ever",
+          "ts": "1577741241.005000",
+          "type": "message",
+          "user": "U09EZ7Z2R"
+        }
+      ],
+      "ok": true
+    },
+    "votes": {
+      "U09EZ7Z2R": 3
+    },
+    "yymm": "2019-12"
+  }
