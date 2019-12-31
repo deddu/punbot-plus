@@ -6,3 +6,7 @@
     - update template with new functions/tables
     - update message with rank verbage
     - compute score 
+
+
+* Local testing
+sam local invoke "ScoresMonthlyFunction" -e ./events/dydb-update.json

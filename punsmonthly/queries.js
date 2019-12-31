@@ -19,7 +19,10 @@ async function getItem (chan_yymm){
     }
     return documentClient.get(params)
         .promise()
-        .then( x => x.Item)
+        .then( x => {
+            console.log(x);
+        return    x.Item
+        })
         .catch(e => {
             console.error(e);
             return 

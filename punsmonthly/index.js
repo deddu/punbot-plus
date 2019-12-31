@@ -25,7 +25,8 @@ const compute_score = (author_aggregate) => {
 //            }
 //        }
 //      }
-function process_record(r){
+async function process_record(r){
+    let current_agg 
     switch (r.eventName){
         case 'INSERT':
         case 'MODIFY':{
@@ -35,7 +36,10 @@ function process_record(r){
             const [chan,author] = updated_pun.pk.split(':');
             const score = updated_pun.score;
             const punId = updated_pun.sk;
-            let current_agg = await q.getItem(updated_pun.chan_yymm);
+            console.log('here');
+            current_agg = await q.getItem(updated_pun.chan_yymm);
+            console.log('found current', current_agg);
+
             if (!current_agg){
                 //not existing, we initialize it
                 current_agg = {
@@ -53,15 +57,17 @@ function process_record(r){
             current_agg.authors[author].punsScores[punId]=score;
             // updates avg
             current_agg.authors[author].avg = compute_score(current_agg.authors[author]);
+            console.log('updating with', current_agg);
             await mut.put_record(current_agg);
-            return current_agg;
+            break;
         }
-        case 'DELETE':{
+        case 'REMOVE':{
             const deleted_pun = AWS.DynamoDB.Converter.unmarshall(R.view(oldItemLens,r))
             console.log('updated pun', deleted_pun);
             const [chan,author] = deleted_pun.pk.split(':');
             const punId = deleted_pun.sk;
-            let current_agg = await q.getItem(updated_pun.chan_yymm);
+            current_agg = await q.getItem(deleted_pun.chan_yymm);
+            console.log('found current', current_agg);
             delete current_agg.authors[author].punsScores[punId]
             if (Object.keys(current_agg.authors[author].punsScores)>0){
                 //still has puns to score
@@ -71,16 +77,22 @@ function process_record(r){
                 //doesn't have any more puns, let's give him a nice 0
                 current_agg.authors[author].avg = 0
             }
+            console.log('updating with', current_agg);
             await mut.put_record(current_agg);
-            return current_agg;
+            break;
         }
     }
+    return current_agg;
 }  
 
 exports.handler = async (event) => {
     console.log(event);
     const data = event.Records;
-    data.map(process_record)
+    for (r of  data){
+        console.log("processing", r)
+        await process_record(r)
+    }
+        
     
     return event;
 };

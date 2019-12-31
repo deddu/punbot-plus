@@ -73,10 +73,10 @@ async function on_mention( e) {
         case 'rank':{
             if (tokens.ever ){
                 scores = await q.authorsRankEver(chan)
-                blocks = fmt.fmt_items(`<#${chan}> rank ever`, scores)
+                blocks = fmt.fmt_ranks(`<#${chan}> rank ever`, scores)
             } else if (tokens.date){
                 scores = await q.authorsRankMonth(chan, tokens.date)
-                blocks = fmt.fmt_items(`<#${chan}> rank in ${tokens.date}`, scores)
+                blocks = fmt.fmt_ranks(`<#${chan}> rank in ${tokens.date}`, scores)
             }
             break;
         }
