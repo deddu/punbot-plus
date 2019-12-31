@@ -10,6 +10,7 @@ const default_message = [
 you can ask for 
 - \`top10 [@user|YYYY-MM|ever]\` *eg:* _top10 2019-12_
 - \`shit [@user|YYYY-MM|ever]\`  *eg:* _shit ever_
+- \`rank [YYYY-MM]\` *eg:* _rank 2020-01_
 `
 // - :construction-worker: ~rank~ [YYYY-MM|ever]
         }
