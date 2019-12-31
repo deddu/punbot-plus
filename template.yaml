@@ -122,7 +122,7 @@ Resources:
           Projection:
             NonKeyAttributes:
               - text
-              - msg_id
+              - link
             ProjectionType: INCLUDE
         # gsi_top10_ever = {pk: "chan",sk:"score"}      
         - IndexName: Top10Ever
@@ -134,8 +134,7 @@ Resources:
           Projection:
             NonKeyAttributes:
               - text
-              - chan_author
-              - msg_id
+              - link
             ProjectionType: INCLUDE
         # gsi_top10_mo = {pk: "chan_date",sk:"score"}
         - IndexName: Top10month
@@ -147,8 +146,7 @@ Resources:
           Projection:
             NonKeyAttributes:
               - text
-              - chan_author
-              - msg_id
+              - link
             ProjectionType: INCLUDE
       # StreamSpecification:
       #   StreamViewType: NEW_IMAGE

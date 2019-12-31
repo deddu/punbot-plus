@@ -33,62 +33,59 @@ async function on_mention( e) {
     console.log('on_mention', e)
     const chan = e.channel
     const tokens = tokenize(e.text);
+    let blocks = fmt.default_message
     if(!tokens){
         //early out, wrong ask
+        await slack_api.post_block(blocks, chan);
         return {message:"wrong request"}
     }
     
-    let op;
+    let scores;
+
+    //fmt.fmt_items(scores)
     switch (tokens.cmd) {
         case 'top10':{
             if (tokens.ever ){
-                op = ()=> q.top10Ever(chan)
+                scores = await q.top10Ever(chan)
+                blocks = fmt.fmt_items(`<#${chan}> top10 ever`, scores)
             } else if (tokens.author){
-                op = ()=>q.top10Author(chan, tokens.author)
+                scores = await q.top10Author(chan, tokens.author)
+                blocks = fmt.fmt_items(`<#${chan}> top10 by <@${tokens.author}>`, scores)
             } else if (tokens.date){
-                op = ()=>q.top10Month(chan, tokens.date)
+                scores = await q.top10Month(chan, tokens.date)
+                blocks = fmt.fmt_items(`<#${chan}> top10 in ${tokens.date}`, scores)
             }
-            break
+            break;
         }
         case 'shit':{
             if (tokens.ever ){
-                op = ()=>q.shittiestEver(chan)
+                scores = await q.shittiestEver(chan)
+                blocks = fmt.fmt_items(`<#${chan}> shittiest ever`, scores)
             } else if (tokens.author){
-                op = () => q.shittiestAuthor(chan, tokens.author)
+                scores = await  q.shittiestAuthor(chan, tokens.author)
+                blocks = fmt.fmt_items(`<#${chan}> shittiest by <@${tokens.author}>`, scores)
             } else if (tokens.date){
-                op = () => q.shittiestMonth(chan, tokens.date)
+                scores = await  q.shittiestMonth(chan, tokens.date)
+                blocks = fmt.fmt_items(`<#${chan}> shittiest in ${tokens.date}`, scores)
             }
+            break;
         }
         case 'rank':{
             if (tokens.ever ){
-                op = ()=>q.authorsRankEver(chan)
+                scores = await q.authorsRankEver(chan)
+                blocks = fmt.fmt_items(`<#${chan}> rank ever`, scores)
             } else if (tokens.date){
-                op = ()=>q.authorsRankMonth(chan, tokens.date)
+                scores = await q.authorsRankMonth(chan, tokens.date)
+                blocks = fmt.fmt_items(`<#${chan}> rank in ${tokens.date}`, scores)
             }
+            break;
+        }
+        default:{
+            blocks = fmt.default_message
         }
     }
+    console.log('blocks',blocks)
 
-    let scores = await op()
-    console.log(scores)
-    // [
-    //     {
-    //       sk: '1577740115.003800',
-    //       score: 7,
-    //       chan_author: 'CPRR5AD08:U09EZ7Z2R',
-    //       text: {
-    //         channel_actions_count: 0,
-    //         messages: [Array],
-    //         is_limited: false,
-    //         has_more: true,
-    //         channel_actions_ts: null,
-    //         ok: true,
-    //         latest: '1577740115.003800'
-    //       },
-    //       pk: 'CPRR5AD08:U09EZ7Z2R'
-    //     }
-    //   ]
-    
-    const blocks = fmt.fmt_shit(scores)
     let text_slack = await slack_api.post_block(blocks, chan);
     return {message:scores, text_slack}
 }
@@ -102,21 +99,25 @@ async function on_reaction_removed(e){
     const p = points[e.reaction] || -1
     if (p < 0 ){
         // early return, reaction was junk
+        console.log(`early return, :${e.reaction}: is not a reaction we care about` )
         return {message:`${voter} gave ${p} to ${author} in ${chan}`}
     }
 
-    let record = await q.getMsg(chan, msg_id)
+    let record = await q.getMsg(chan_author, msg_id)
     if(!record){
+        console.log(`early return, pk=${chan_author}, sk=${msg_id} not found` )
         return {message:`${voter} gave ${p} to ${author} in ${chan}`}
     }
 
     delete record.votes[voter]
     if (Object.keys(record.votes).length > 0 ){
         // it was one of many votes, we need to recompute and update;
+        console.log('multiple votes are still present in record')
         record.score = compute_score(record)
         await mut.put_record(record);
     } else {
         //this was the only vote. so we can delete the pun;
+        console.log('deleting record')
         await mut.delete_record(chan_author,msg_id)
     }
     //
@@ -161,7 +162,7 @@ async function on_reaction(e){
         record.chan_author = chan_author
         record.date = date;
         record.yymm = yymm;
-        record.chan_mo = `${chan}:${yymm}`
+        record.chan_yymm = `${chan}:${yymm}`
         record.date_punid = `${date}:${msg_id}`
         record.punid = msg_id; 
         record.votes = {}

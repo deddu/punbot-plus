@@ -1,69 +1,72 @@
 // all those should return slack 'blocks' arrays, so they can be feed to 
 // slack_api.post_block
-
-const fmt_scores = (scores) => {
-    const fmt_score = (x) => ({
+const default_message = [
+    {
         type: "section",
         text: {
             type: "mrkdwn",
-            text: `<@${x}>: ${scores[x]}`
+            text: `punbot tracks reaction votes :zero: - :keycap_ten: when added to messages.
+you can ask for 
+- \`top10 [@user|YYYY-MM|ever]\` *eg:* _top10 2019-12_
+- \`shit [@user|YYYY-MM|ever]\`  *eg:* _shit ever_
+`
+// - :construction-worker: ~rank~ [YYYY-MM|ever]
         }
-    });
-    const user_scores = Object.keys(scores)
-    .filter(x => x != 'chan')
-    .map(fmt_score);
-    return [
-        {
-            type: "section",
-            text: {
-                type: "mrkdwn",
-                text: `* <#${scores.chan}> scores:* \t :cookie:|:doughnut:|:beer:|:donutcoin: +1 \t :hankey:|:lemon: -1   `
-            }
-        },
-        {
-            type: "divider"
-        },
-        ...user_scores
-    ];
+    }
+]
+const fmt_one = (x) => {      
+    // {
+    //       sk: '1577740115.003800',
+    //       score: 7,
+    //       chan_author: 'CPRR5AD08:U09EZ7Z2R',
+    //       text: 'bad pun',
+    //       link: 'https://blah,
+    //       pk: 'CPRR5AD08:U09EZ7Z2R'
+    //     }
+    const [chan,author] = x.pk.split(':');
+    const epochDate = x.sk.split('.')[0];    
+    const block = {   type: "section",
+    text: {
+        type: "mrkdwn",
+        text: `*${x.score}* <@${author}>:\n>${x.text}\n<!date^${epochDate}^{date_short}^${x.link}|fallback>`
+    }}
+    return block;
 };
 
-function fmt_shit (shitItems){
+function fmt_items (title, items){
     // scores
     // [
     //     {
     //       sk: '1577740115.003800',
     //       score: 7,
     //       chan_author: 'CPRR5AD08:U09EZ7Z2R',
-    //       text: {
-    //         channel_actions_count: 0,
-    //         messages: [Array],
-    //         is_limited: false,
-    //         has_more: true,
-    //         channel_actions_ts: null,
-    //         ok: true,
-    //         latest: '1577740115.003800'
-    //       },
+    //       text: 'bad pun',
+    //       link: 'https://blah,
     //       pk: 'CPRR5AD08:U09EZ7Z2R'
     //     }
     //   ]
-    shitItem = shitItems[0];
-    const [chan,author] = shitItem.pk.split(':');
-    const text = shitItem.text;
-    const score = shitItem.score;
-    const date = new Date(Number(shitItem.sk)*1000);
+    
+    const user_blocks = items.map(fmt_one)
+
     const blocks = [
         {
             type: "section",
             text: {
                 type: "mrkdwn",
-                text: `<#${chan}> worse by <@${author}> is \n>${text} \n with a quite impressive ${score}`
+                text: title
             }
-        }
-    ]    
+        },
+        {
+            type: "divider"
+        },
+        ...user_blocks
+    ]
+
     return blocks;
 }
 
+
 module.exports = {
-    fmt_scores,
-    fmt_shit
+    default_message,
+    fmt_items
 }
