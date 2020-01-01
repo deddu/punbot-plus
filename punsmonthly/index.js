@@ -7,14 +7,15 @@ const mut = require('./mutations');
 const newItemLens = R.lensPath(['dynamodb','NewImage'])
 const oldItemLens = R.lensPath(['dynamodb','OldImage'])
 
-const documentClient = new AWS.DynamoDB.DocumentClient();
-const TABLE = process.env.TABLE_NAME || "monthlyScoresTable"
-
 const compute_score = (author_aggregate) => {
     const keys = Object.keys(author_aggregate.punsScores)
     const tot =  keys.reduce((acc,x) => author_aggregate.punsScores[x]+ acc, 0)
     return tot / (keys.length)
 }
+
+const getNew = (x) => AWS.DynamoDB.Converter.unmarshall(R.view(newItemLens, x))
+const getOld = (x) => AWS.DynamoDB.Converter.unmarshall(R.view(oldItemLens, x))
+
 
 // {
 //        pk: chan_yymm
@@ -30,7 +31,7 @@ async function process_record(r){
     switch (r.eventName){
         case 'INSERT':
         case 'MODIFY':{
-            const updated_pun = AWS.DynamoDB.Converter.unmarshall(R.view(newItemLens,r))
+            const updated_pun = getNew(r)
             //so we have the new pun. We go grab this fella's record for this chan
             console.log('updated pun', updated_pun);
             const [chan,author] = updated_pun.pk.split(':');
@@ -62,7 +63,7 @@ async function process_record(r){
             break;
         }
         case 'REMOVE':{
-            const deleted_pun = AWS.DynamoDB.Converter.unmarshall(R.view(oldItemLens,r))
+            const deleted_pun = getOld(r)
             console.log('updated pun', deleted_pun);
             const [chan,author] = deleted_pun.pk.split(':');
             const punId = deleted_pun.sk;
@@ -96,3 +97,9 @@ exports.handler = async (event) => {
     
     return event;
 };
+
+exports.compute_score = compute_score;
+exports.newItemLens = newItemLens;
+exports.oldItemLens = oldItemLens;
+exports.getNew = getNew;
+exports.getOld = getOld;

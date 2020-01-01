@@ -4,12 +4,15 @@
   "description": "monthly aggregations for punbot",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "dependencies": {
     "aws-sdk": "latest",
     "ramda": "latest"
   },
   "author": "Andrea Cadeddu",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^24.9.0"
+  }
 }
