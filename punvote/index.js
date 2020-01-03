@@ -3,7 +3,7 @@ const slack_api = require("./slack_api");
 const fmt = require("./fmt_scores");
 const q = require('./queries');
 const mut = require('./mutations');
-
+const log = require('debug')('votes:index');
 
 const points = {
     zero:0,
@@ -30,7 +30,7 @@ const tokenize = (s) => [... s.matchAll(tokenizer)].map(x=>x.groups)[0]
 
 
 async function on_mention( e) {
-    console.log('on_mention', e)
+    log('on_mention', e)
     const chan = e.channel
     const tokens = tokenize(e.text);
     let blocks = fmt.default_message
@@ -84,7 +84,7 @@ async function on_mention( e) {
             blocks = fmt.default_message
         }
     }
-    console.log('blocks',blocks)
+    log('blocks',blocks)
 
     let text_slack = await slack_api.post_block(blocks, chan);
     return {message:scores, text_slack}
@@ -99,25 +99,25 @@ async function on_reaction_removed(e){
     const p = points[e.reaction] || -1
     if (p < 0 ){
         // early return, reaction was junk
-        console.log(`early return, :${e.reaction}: is not a reaction we care about` )
+        log(`early return, :${e.reaction}: is not a reaction we care about` )
         return {message:`${voter} gave ${p} to ${author} in ${chan}`}
     }
 
     let record = await q.getMsg(chan_author, msg_id)
     if(!record){
-        console.log(`early return, pk=${chan_author}, sk=${msg_id} not found` )
+        log(`early return, pk=${chan_author}, sk=${msg_id} not found` )
         return {message:`${voter} gave ${p} to ${author} in ${chan}`}
     }
 
     delete record.votes[voter]
     if (Object.keys(record.votes).length > 0 ){
         // it was one of many votes, we need to recompute and update;
-        console.log('multiple votes are still present in record')
+        log('multiple votes are still present in record')
         record.score = compute_score(record)
         await mut.put_record(record);
     } else {
         //this was the only vote. so we can delete the pun;
-        console.log('deleting record')
+        log('deleting record')
         await mut.delete_record(chan_author,msg_id)
     }
     //
@@ -145,9 +145,9 @@ async function on_reaction(e){
     // 1: grab record from DYDB
     let record = await q.getMsg(chan, msg_id)
     //if not existing, we initialize it;
-    console.log('found ',record)
+    log('found ',record)
     if (!record){  
-        console.log('initializing')
+        log('initializing')
         record = {}
         //fetch message from slack
         const link  = await slack_api.get_message_link(chan, msg_id)
@@ -170,10 +170,10 @@ async function on_reaction(e){
     // append vote
     record.votes[voter] = p
 
-    console.log('record:',record)
+    log('record:',record)
     // compute new score
     record.score = compute_score(record)
-    console.log('scored record:',record)
+    log('scored record:',record)
     await mut.put_record(record);
 
    return {message:`${voter} gave ${p} to ${author} in ${chan}`}
@@ -210,12 +210,12 @@ exports.handler = async (event) => {
             break;
         }
         case 'url_verification':{
-            console.log('here')
+            log('here')
             resp = {challenge: slack_raw.challenge}
             break;
         }
         default:{
-            console.log(slack_raw)
+            log(slack_raw)
         }
     }
     

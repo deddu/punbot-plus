@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 const documentClient = new AWS.DynamoDB.DocumentClient();
+const log = require('debug')('monthly:queries');
 
 const TABLE = process.env.TABLE_NAME || "monthlyScoresTable"
 
@@ -20,7 +21,7 @@ async function getItem (chan_yymm){
     return documentClient.get(params)
         .promise()
         .then( x => {
-            console.log(x);
+            log(x);
         return    x.Item
         })
         .catch(e => {
