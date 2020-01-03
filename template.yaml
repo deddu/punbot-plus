@@ -30,6 +30,7 @@ Resources:
           VOTES_TABLE_NAME: !Ref PunsVotesTable
           MONTHLY_SCORES_TABLE_NAME: !Ref MonthlyScoresTable
           # LIFE_SCORES_TABLE_NAME: !Ref LifetimeScoresTable
+          # DEBUG: 'votes:*'
       Events:
         PunVote:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -48,6 +49,7 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref MonthlyScoresTable
+          # DEBUG: 'monthly:index'
       Events:  
         VoteStream:
           Type: DynamoDB

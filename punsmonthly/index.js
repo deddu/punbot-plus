@@ -3,6 +3,7 @@ const AWS = require('aws-sdk');
 const R = require('ramda');
 const q = require('./queries');
 const mut = require('./mutations');
+const log = require('debug')('monthly:index');
 
 const newItemLens = R.lensPath(['dynamodb','NewImage'])
 const oldItemLens = R.lensPath(['dynamodb','OldImage'])
@@ -33,13 +34,12 @@ async function process_record(r){
         case 'MODIFY':{
             const updated_pun = getNew(r)
             //so we have the new pun. We go grab this fella's record for this chan
-            console.log('updated pun', updated_pun);
+            
             const [chan,author] = updated_pun.pk.split(':');
             const score = updated_pun.score;
             const punId = updated_pun.sk;
-            console.log('here');
             current_agg = await q.getItem(updated_pun.chan_yymm);
-            console.log('found current', current_agg);
+            log('found current', current_agg);
 
             if (!current_agg){
                 //not existing, we initialize it
@@ -58,17 +58,17 @@ async function process_record(r){
             current_agg.authors[author].punsScores[punId]=score;
             // updates avg
             current_agg.authors[author].avg = compute_score(current_agg.authors[author]);
-            console.log('updating with', current_agg);
+            log('updating with', current_agg);
             await mut.put_record(current_agg);
             break;
         }
         case 'REMOVE':{
             const deleted_pun = getOld(r)
-            console.log('updated pun', deleted_pun);
+            log('updated pun', deleted_pun);
             const [chan,author] = deleted_pun.pk.split(':');
             const punId = deleted_pun.sk;
             current_agg = await q.getItem(deleted_pun.chan_yymm);
-            console.log('found current', current_agg);
+            log('found current', current_agg);
             delete current_agg.authors[author].punsScores[punId]
             if (Object.keys(current_agg.authors[author].punsScores)>0){
                 //still has puns to score
@@ -78,7 +78,7 @@ async function process_record(r){
                 //doesn't have any more puns, let's give him a nice 0
                 current_agg.authors[author].avg = 0
             }
-            console.log('updating with', current_agg);
+            log('updating with', current_agg);
             await mut.put_record(current_agg);
             break;
         }
@@ -87,10 +87,10 @@ async function process_record(r){
 }  
 
 exports.handler = async (event) => {
-    console.log(event);
+    log(event);
     const data = event.Records;
     for (r of  data){
-        console.log("processing", r)
+        log("processing", r)
         await process_record(r)
     }
         
