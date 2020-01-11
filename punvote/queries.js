@@ -3,7 +3,6 @@ const documentClient = new AWS.DynamoDB.DocumentClient();
 
 const VOTESSTABLE = process.env.VOTES_TABLE_NAME || "votesstable"
 const MONTHLY_SCORES_TABLE = process.env.MONTHLY_SCORES_TABLE_NAME || "monthlyscoresstable"
-const LIFE_SCORES_TABLE = process.env.LIFE_SCORES_TABLE_NAME || "lifescoresstable"
 
 async function getMsg (chan_author, msg_id){
     const params = {
@@ -153,7 +152,7 @@ async function authorsRankMonth (chan, yymm){
 
 async function authorsRankEver (chan){
     const params = {
-        TableName: LIFE_SCORES_TABLE_NAME,
+        TableName: MONTHLY_SCORES_TABLE,
         Key:{ pk:chan}
     }
     return documentClient.get(params)
