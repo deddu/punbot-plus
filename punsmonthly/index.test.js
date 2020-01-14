@@ -105,6 +105,44 @@ test('upMonthly appends and update a record with the new pun', ()=>{
 })
 
 
+test('upMonthly appends and update a record for a new author the new pun', ()=>{
+    // it returns new record on not existing
+    const newP = {
+        pk:'c123:a456',
+        score:10,
+        sk:'p2',
+        chan_yymm:'c123:2020-01'
+    }
+    const current = {
+        pk: 'c123:2020-01',
+        authors:{
+            a123:{
+                avg:2,
+                punsScores:{p1:2}
+            }
+        }
+    }
+    const expected = {
+        pk: 'c123:2020-01',
+        authors:{
+            a123:{
+                avg:2,
+                punsScores:{p1:2}
+            },
+            a456:{
+                avg:10,
+                punsScores:{p2:10}
+            }
+        }
+    }
+    const computed = upMonthly(current,newP)
+    expect(computed.authors.a123.avg).toBeCloseTo(2);
+    expect(computed.authors.a456.avg).toBeCloseTo(10);
+    expect(computed.authors.a123.punsScores).toEqual(expected.authors.a123.punsScores)
+    expect(computed.authors.a456.punsScores).toEqual(expected.authors.a456.punsScores)
+})
+
+
 test('rmMonthly deletes a pun score among many',()=>{
     const oldP = {
         pk:'c123:a123',

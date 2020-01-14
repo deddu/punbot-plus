@@ -34,21 +34,21 @@ async function process_record(r){
         case 'MODIFY':{
             const updated_pun = getNew(r)
             //so we have the new pun. We go grab this fella's record for this chan
-            current_agg = await q.getItem(updated_pun.chan_yymm);
-            life_agg = await q.getItem(updated_pun.chan);
-            log('found current', current_agg,life_agg);
-            current_agg = upMonthly(current_agg, updated_pun);
-            life_agg = upEver(life_agg, current_agg, updated_pun);
+            const old_current_agg = await q.getItem(updated_pun.chan_yymm);
+            const old_life_agg = await q.getItem(updated_pun.chan);
+            log('found current', old_current_agg,old_life_agg);
+            current_agg = upMonthly(old_current_agg, updated_pun);
+            life_agg = upEver(old_life_agg, current_agg, updated_pun);
             break;
         }
         case 'REMOVE':{
             const deleted_pun = getOld(r)
             log('updated pun', deleted_pun);
-            current_agg = await q.getItem(deleted_pun.chan_yymm);
-            life_agg = await q.getItem(deleted_pun.chan);
-            log('found current', current_agg, life_agg);
-            current_agg = rmMonthly(current_agg, deleted_pun);
-            life_agg = upEver(life_agg,current_agg,deleted_pun);
+            const old_current_agg = await q.getItem(deleted_pun.chan_yymm);
+            const old_life_agg = await q.getItem(deleted_pun.chan);
+            log('found current', old_current_agg, old_life_agg);
+            current_agg = rmMonthly(old_current_agg, deleted_pun);
+            life_agg = upEver(old_life_agg,current_agg,deleted_pun);
             break;
         }
     }
@@ -93,6 +93,10 @@ function upMonthly(current_agg, newPun) {
             }
         };
     }
+    // author not seen before, but agg existing
+    if(!current_agg.authors[author]){
+        current_agg.authors[author]={avg:0, punsScores:{}}
+    }
     // updates pun score
     current_agg.authors[author].punsScores[punId] = score;
     // updates avg
@@ -125,6 +129,10 @@ function upEver(life_agg, monthlyAgg, pun) {
                     }
                 }
             };
+        }
+        // author not seen before, but agg existing
+        if(!life_agg.authors[author]){
+            life_agg.authors[author]={avg:0, yymm:{}}
         }
         // updates pun score
         life_agg.authors[author].yymm[yymm] = score;
