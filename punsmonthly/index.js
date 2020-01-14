@@ -81,27 +81,22 @@ function upMonthly(current_agg, newPun) {
     const [chan,author] = newPun.pk.split(':');
     const score = newPun.score;
     const punId = newPun.sk;
-    if (!current_agg) {
-        //not existing, we initialize it
-        current_agg = {
-            pk: newPun.chan_yymm,
-            authors: {
-                [author]: {
-                    avg: 0,
-                    punsScores: {}
-                }
-            }
-        };
-    }
-    // author not seen before, but agg existing
-    if(!current_agg.authors[author]){
-        current_agg.authors[author]={avg:0, punsScores:{}}
-    }
+
+    const l_author = R.lensPath(['authors', author]);
+    const l_author_avg = R.compose(l_author, R.lensProp('avg'))
+    const l_pun = R.lensPath(['punsScores',punId])
+    const l_author_pun = R.compose(l_author, l_pun)
+    
+    //if not existing, we initialize it
+    const agg = !! current_agg? current_agg : {pk: newPun.chan_yymm}
     // updates pun score
-    current_agg.authors[author].punsScores[punId] = score;
+    // covers case of author not seen before, but agg existing
+    const agg0 = R.set(l_author_pun, score, agg)
     // updates avg
-    current_agg.authors[author].avg = compute_score(current_agg.authors[author]);
-    return current_agg;
+    const new_score = compute_score(R.view(l_author,agg0))
+    const agg1 = R.set(l_author_avg, new_score, agg0);
+    // current_agg.authors[author].avg = compute_score(current_agg.authors[author]);
+    return agg1;
 }
 
 // {
@@ -116,32 +111,24 @@ function upMonthly(current_agg, newPun) {
 function upEver(life_agg, monthlyAgg, pun) {
     const [chan,yymm] = monthlyAgg.pk.split(':');
     const [_,author] = pun.pk.split(':');
+    const l_author = R.lensPath(['authors', author]);
+    const l_author_avg = R.compose(l_author, R.lensProp('avg'))
+    const l_yymm = R.lensPath(['yymm',yymm])
+    const l_author_yymm = R.compose(l_author, l_yymm)
+    
+    const score = R.view(l_author_avg, monthlyAgg) //monthlyAgg.authors[author].avg;
+
     if (!! monthlyAgg.authors[author]){
-        const score = monthlyAgg.authors[author].avg;
-        if (!life_agg) {
-            //not existing, we initialize it
-            life_agg = {
-                pk: chan,
-                authors: {
-                    [author]: {
-                        avg: 0,
-                        yymm: {}
-                    }
-                }
-            };
-        }
-        // author not seen before, but agg existing
-        if(!life_agg.authors[author]){
-            life_agg.authors[author]={avg:0, yymm:{}}
-        }
-        // updates pun score
-        life_agg.authors[author].yymm[yymm] = score;
+        const agg = !! life_agg? life_agg : {pk: chan}
+        // covers case of author not seen before, but agg existing
+        const agg0 = R.set(l_author_yymm, score, agg)
         // updates avg
-        life_agg.authors[author].avg = compute_score(life_agg.authors[author],'yymm');
+        const new_score = compute_score(R.view(l_author,agg0),'yymm')
+        return R.set(l_author_avg, new_score, agg0);
     } else {
         delete life_agg.authors[author];
+        return life_agg;
     }
-    return life_agg;
 }
 
 
