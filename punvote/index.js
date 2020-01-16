@@ -143,7 +143,7 @@ async function on_reaction(e){
     }
 
     // 1: grab record from DYDB
-    let record = await q.getMsg(chan, msg_id)
+    let record = await q.getMsg(chan_author, msg_id)
     //if not existing, we initialize it;
     log('found ',record)
     if (!record){  
