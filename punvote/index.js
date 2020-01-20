@@ -145,7 +145,7 @@ async function on_reaction(e){
     // 1: grab record from DYDB
     let record = await q.getMsg(chan_author, msg_id)
     //if not existing, we initialize it;
-    log('found ',record)
+    log('found ', record)
     if (!record){  
         log('initializing')
         record = {}
@@ -195,7 +195,7 @@ const build_response = o => ({
 })
     
     
-exports.handler = async (event) => {
+const handler = async (event) => {
     // idk those two are needed for local evts wiht the apigw format
     // const body = JSON.parse(event.body)
     // const slack_raw = body.body
@@ -221,3 +221,8 @@ exports.handler = async (event) => {
     
     return build_response(resp);
 };
+
+module.exports = {
+    handler,
+    compute_score
+}
