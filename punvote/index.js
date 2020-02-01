@@ -124,6 +124,11 @@ async function on_reaction_removed(e){
     return {message:`${voter} gave ${p} to ${author} in ${chan}`}
 }
 
+// const get_record = async (chan_author, msg_id)=> await q.getMsg(chan_author, msg_id)
+// const put_record = async (record) => await mut.put_record(record);
+// const get_message_link = async (chan,msg_id) => await slack_api.get_message_link(chan, msg_id)
+// const get_message_text = async (chan,msg_id) => await slack_api.get_message(chan, msg_id)
+
 async function on_reaction(e){  
     const chan = e.item.channel
     const voter = e.user
@@ -143,15 +148,15 @@ async function on_reaction(e){
     }
 
     // 1: grab record from DYDB
-    let record = await q.getMsg(chan, msg_id)
+    let record = await q.getMsg(chan_author, msg_id)
     //if not existing, we initialize it;
-    log('found ',record)
+    log('found ', record)
     if (!record){  
         log('initializing')
         //fetch message from slack
         const link  = await slack_api.get_message_link(chan, msg_id)
-        const text = await slack_api.get_message(chan, msg_id)
-        record = mk_record(record, text, link, chan, chan_author, msg_id, author, date, yymm);
+        const text = slack_api.get_message(chan, msg_id)
+        record = mk_record(chan, author, msg_id, date, yymm, text, link);
     }
     // append vote
     record.votes[voter] = p
@@ -162,7 +167,7 @@ async function on_reaction(e){
     log('scored record:',record)
     await mut.put_record(record);
 
-   return {message:`${voter} gave ${p} to ${author} in ${chan}`}
+   return record
 }
 
 const msg_routes = {
@@ -181,7 +186,7 @@ const build_response = o => ({
 })
     
     
-exports.handler = async (event) => {
+const handler = async (event) => {
     // idk those two are needed for local evts wiht the apigw format
     // const body = JSON.parse(event.body)
     // const slack_raw = body.body
@@ -208,7 +213,8 @@ exports.handler = async (event) => {
     return build_response(resp);
 };
 
-function mk_record(text, link, chan, chan_author, msg_id, author, date, yymm) {
+function mk_record(chan, author, msg_id, date, yymm, text, link) {
+    const chan_author = `${chan}:${author}`
     const record = {
         pk : chan_author,
         sk : msg_id,
@@ -227,3 +233,9 @@ function mk_record(text, link, chan, chan_author, msg_id, author, date, yymm) {
     return record;
 }
 
+module.exports = {
+    handler,
+    compute_score,
+    mk_record,
+    on_reaction
+}
