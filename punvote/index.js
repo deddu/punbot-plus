@@ -148,24 +148,10 @@ async function on_reaction(e){
     log('found ',record)
     if (!record){  
         log('initializing')
-        record = {}
         //fetch message from slack
         const link  = await slack_api.get_message_link(chan, msg_id)
         const text = await slack_api.get_message(chan, msg_id)
-        // put other data
-        record.text = text;
-        record.link = link;
-        record.chan = chan;
-        record.pk = chan_author;
-        record.sk = msg_id;
-        record.author = author;
-        record.chan_author = chan_author
-        record.date = date;
-        record.yymm = yymm;
-        record.chan_yymm = `${chan}:${yymm}`
-        record.date_punid = `${date}:${msg_id}`
-        record.punid = msg_id; 
-        record.votes = {}
+        record = mk_record(record, text, link, chan, chan_author, msg_id, author, date, yymm);
     }
     // append vote
     record.votes[voter] = p
@@ -221,3 +207,23 @@ exports.handler = async (event) => {
     
     return build_response(resp);
 };
+
+function mk_record(text, link, chan, chan_author, msg_id, author, date, yymm) {
+    const record = {
+        pk : chan_author,
+        sk : msg_id,
+        chan_yymm : `${chan}:${yymm}`,
+        date_punid : `${date}:${msg_id}`,
+        punid : msg_id,
+        votes : {},
+        text,
+        link,
+        chan,
+        author,
+        chan_author,
+        date,
+        yymm,
+    };
+    return record;
+}
+
