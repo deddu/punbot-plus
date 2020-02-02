@@ -45,6 +45,7 @@ const mkEvent = (chan,voter,author,msg_id,reaction)=>({
   item_user:author,
   user:voter,
 })
+
 describe('on reaction', ()=>{
 
 beforeEach(()=>{
@@ -73,8 +74,7 @@ it('cannot put junk', async ()=>{
   const {on_reaction} = require('./index')
   res = await on_reaction(evt)
   expect(res).toEqual({message: "ron gave -1 to bob in chan5"})
-  // new record
-  // update record
+  
 })
 
 
@@ -132,7 +132,6 @@ it('record is updated allright', async ()=>{
   queries.__setMockData(current);
   const {on_reaction} = require('./index')
   
-
   const expected = {
     pk:"chan5:bob",
     sk:"1580595054.672",
@@ -152,7 +151,110 @@ it('record is updated allright', async ()=>{
   }
   res = await on_reaction(evt)
   expect(res).toEqual(expected)
-  // update record
 })
+
+})
+
+describe('on reaction removed', ()=>{
+  
+  it('ignores if the vote is junk',async ()=>{
+    const evt = mkEvent("chan5","ron","bob","1580595054.672",":junk:")
+    const {on_reaction_removed} = require('./index')
+    res = await on_reaction_removed(evt)
+    expect(res).toEqual({message: "ron gave -1 to bob in chan5"})
+  })
+
+
+  it('removes owners vote of many',async ()=>{
+    //mocks callbacks and getters
+  const evt = mkEvent("chan5","ron","bob","1580595054.672","three")
+  const queries = require('./queries');
+  const current = {
+    pk:"chan5:bob",
+    sk:"1580595054.672",
+    chan_author:"chan5:bob",
+    chan_yymm : "chan5:2020-02",
+    date_punid : "2020-02-01:1580595054.672",
+    punid : "1580595054.672",
+    score:5,
+    votes : {"ron":3, "carl":7},
+    text:"message chan5 1580595054.672",
+    link: "http://www.example.com/chan5/1580595054.672",
+    chan: "chan5",
+    author: "bob",
+    chan_author: "chan5:bob",
+    date:"2020-02-01",
+    yymm: "2020-02",
+  }
+  
+  queries.__setMockData(current);
+  const {on_reaction_removed} = require('./index')
+  
+  const expected = {
+    pk:"chan5:bob",
+    sk:"1580595054.672",
+    chan_author:"chan5:bob",
+    chan_yymm : "chan5:2020-02",
+    date_punid : "2020-02-01:1580595054.672",
+    punid : "1580595054.672",
+    score:7,
+    votes : {"carl":7},
+      text:"message chan5 1580595054.672",
+      link: "http://www.example.com/chan5/1580595054.672",
+      chan: "chan5",
+      author: "bob",
+      chan_author: "chan5:bob",
+      date:"2020-02-01",
+      yymm: "2020-02",
+  }
+  res = await on_reaction_removed(evt)
+  expect(res).toEqual(expected)
+  })
+
+  it('removes last vote and record',async ()=>{
+    const evt = mkEvent("chan5","carl","bob","1580595054.672","three")
+  const queries = require('./queries');
+  const current = {
+    pk:"chan5:bob",
+    sk:"1580595054.672",
+    chan_author:"chan5:bob",
+    chan_yymm : "chan5:2020-02",
+    date_punid : "2020-02-01:1580595054.672",
+    punid : "1580595054.672",
+    score:7,
+    votes : {"carl":7},
+      text:"message chan5 1580595054.672",
+      link: "http://www.example.com/chan5/1580595054.672",
+      chan: "chan5",
+      author: "bob",
+      chan_author: "chan5:bob",
+      date:"2020-02-01",
+      yymm: "2020-02",
+  }
+  
+  queries.__setMockData(current);
+  const {on_reaction_removed} = require('./index')
+  
+  const expected = {
+    pk:"chan5:bob",
+    sk:"1580595054.672",
+    chan_author:"chan5:bob",
+    chan_yymm : "chan5:2020-02",
+    date_punid : "2020-02-01:1580595054.672",
+    punid : "1580595054.672",
+    score:0,
+    votes : {},
+      text:"message chan5 1580595054.672",
+      link: "http://www.example.com/chan5/1580595054.672",
+      chan: "chan5",
+      author: "bob",
+      chan_author: "chan5:bob",
+      date:"2020-02-01",
+      yymm: "2020-02",
+  }
+  res = await on_reaction_removed(evt)
+  expect(res.votes).toEqual(expected.votes)
+  // expect(queries.getMsg.mock.calls.length).toBe(1)
+  })
 
 })

@@ -121,13 +121,8 @@ async function on_reaction_removed(e){
         await mut.delete_record(chan_author,msg_id)
     }
     //
-    return {message:`${voter} gave ${p} to ${author} in ${chan}`}
+    return record;
 }
-
-// const get_record = async (chan_author, msg_id)=> await q.getMsg(chan_author, msg_id)
-// const put_record = async (record) => await mut.put_record(record);
-// const get_message_link = async (chan,msg_id) => await slack_api.get_message_link(chan, msg_id)
-// const get_message_text = async (chan,msg_id) => await slack_api.get_message(chan, msg_id)
 
 async function on_reaction(e){  
     const chan = e.item.channel
@@ -237,5 +232,6 @@ module.exports = {
     handler,
     compute_score,
     mk_record,
-    on_reaction
+    on_reaction,
+    on_reaction_removed
 }
