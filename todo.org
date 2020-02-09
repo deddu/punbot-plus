@@ -7,6 +7,7 @@
     - update message with rank verbage
     - compute score 
 
-
+* TODO verify slack signature
+- https://api.slack.com/docs/verifying-requests-from-slack
 * Local testing
 sam local invoke "ScoresMonthlyFunction" -e ./events/dydb-update.json

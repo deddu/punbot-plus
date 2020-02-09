@@ -2,6 +2,7 @@ const rp = require('request-promise-native');
 const R = require('ramda')
 const textract = R.lensPath(['messages',0,'text'])
 const linkextract = R.lensPath(['permalink'])
+const SLACK_APP_SECRET = process.env.SLACK_APP_SECRET || 'You should set this to something hard to guess'
 
 function post_block(blk, chan) {
     const payload = {
@@ -98,10 +99,15 @@ function get_message(chan,ts){
         });
 }
 
+const verify = (sig,requ,secret=SLACK_APP_SECRET) =>{
+    
+}
+
 module.exports = {
     get_message,
     post_block,
     post_payload,
     post_msg,
-    get_message_link
+    get_message_link,
+    verify
 }
