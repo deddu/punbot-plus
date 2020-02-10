@@ -2,6 +2,7 @@ const rp = require('request-promise-native');
 const R = require('ramda')
 const textract = R.lensPath(['messages',0,'text'])
 const linkextract = R.lensPath(['permalink'])
+const {hmac} = require('crypto');
 const SLACK_APP_SECRET = process.env.SLACK_APP_SECRET || 'You should set this to something hard to guess'
 
 function post_block(blk, chan) {
@@ -99,8 +100,15 @@ function get_message(chan,ts){
         });
 }
 
-const verify = (sig,requ,secret=SLACK_APP_SECRET) =>{
-    
+const verify = (sig, request, secret=SLACK_APP_SECRET) =>{
+    const timestamp = request.headers['X-Slack-Request-Timestamp']
+    sig_basestring = 'v0:' + timestamp + ':' + request.body
+    my_signature = 'v0=' + hmac.compute_hash_sha256(
+        slack_signing_secret,
+        sig_basestring
+        ).hexdigest()
+    slack_signature = request.headers['X-Slack-Signature']
+    return hmac.compare(my_signature, slack_signature);
 }
 
 module.exports = {
