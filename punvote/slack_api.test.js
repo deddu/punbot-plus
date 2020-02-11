@@ -16,5 +16,8 @@ test('verifies signatures correctly', () => {
     body:'{"token":"maDeUp","team_id":"pu99a","api_app_id":"unkwtat","event":{"type":"reaction_added","user":"U1","item":{"type":"message","channel":"C2","ts":"1579016133.000200"},"reaction":"eight","item_user":"U1","event_ts":"1581387529.000100"},"type":"event_callback","event_id":"E9","event_time":1581387529,"authed_users":["U1"]}'
 }
   expect(verify(rq, sec)).toBe(true);
-
+  //to avoid undefined==undefined cases
+  expect(verify({headers:{},body:{}})).toBe(false); 
+  // ain't crashing for missing fields or junk
+  expect(verify('banana',sec)).toBe(false); 
 });

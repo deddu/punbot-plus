@@ -104,9 +104,13 @@ function get_message(chan,ts){
 const verify = (request, secret=SLACK_APP_SIGNIN_SECRET) =>{
     const hmac = crypto.createHmac('sha256', secret);
     log('rq:', request);
-    const timestamp = request.headers['X-Slack-Request-Timestamp']
-    const slack_signature = request.headers['X-Slack-Signature']
-    const sig_basestring = 'v0:' + timestamp + ':' + request.body
+    const {headers,body} = request;
+    if (!headers || !body){
+        return false;
+    }
+    const timestamp = headers['X-Slack-Request-Timestamp']
+    const slack_signature = headers['X-Slack-Signature']
+    const sig_basestring = 'v0:' + timestamp + ':' + body
     const my_signature = 'v0=' + hmac.update(sig_basestring).digest('hex')
     // console.log(my_signature)
     return !!my_signature && my_signature === slack_signature
