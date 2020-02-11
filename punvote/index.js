@@ -185,8 +185,9 @@ const handler = async (event) => {
     // idk those two are needed for local evts wiht the apigw format
     // const body = JSON.parse(event.body)
     // const slack_raw = body.body
-    log(event)
+    log('raw', event)
     if (!slack_api.verify(event)){
+        log('early return, verification failed')
         return build_response({error:'verification failed'})
     }
     const slack_raw = JSON.parse(event.body)
