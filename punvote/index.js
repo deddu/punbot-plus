@@ -186,7 +186,9 @@ const handler = async (event) => {
     // const body = JSON.parse(event.body)
     // const slack_raw = body.body
     log(event)
-    slack_api.verify("hello", event)
+    if (!slack_api.verify(event)){
+        return build_response({error:'verification failed'})
+    }
     const slack_raw = JSON.parse(event.body)
     
     let resp;

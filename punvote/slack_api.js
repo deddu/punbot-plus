@@ -2,9 +2,9 @@ const rp = require('request-promise-native');
 const R = require('ramda')
 const textract = R.lensPath(['messages',0,'text'])
 const linkextract = R.lensPath(['permalink'])
-const {hmac} = require('crypto');
+const crypto = require('crypto');
 const log = require('debug')('votes:slack');
-const SLACK_APP_SECRET = process.env.SLACK_APP_SECRET || 'You should set this to something hard to guess'
+const SLACK_APP_SIGNIN_SECRET = process.env.SLACK_APP_SIGNIN_SECRET ||'You should set this to something hard to guess'
 
 function post_block(blk, chan) {
     const payload = {
@@ -101,17 +101,15 @@ function get_message(chan,ts){
         });
 }
 
-const verify = (sig, request, secret=SLACK_APP_SECRET) =>{
-    log('sig: ',sig, 'rq:', request);
-    return true;
+const verify = (request, secret=SLACK_APP_SIGNIN_SECRET) =>{
+    const hmac = crypto.createHmac('sha256', secret);
+    log('rq:', request);
     const timestamp = request.headers['X-Slack-Request-Timestamp']
-    sig_basestring = 'v0:' + timestamp + ':' + request.body
-    my_signature = 'v0=' + hmac.compute_hash_sha256(
-        slack_signing_secret,
-        sig_basestring
-        ).hexdigest()
-    slack_signature = request.headers['X-Slack-Signature']
-    return hmac.compare(my_signature, slack_signature);
+    const slack_signature = request.headers['X-Slack-Signature']
+    const sig_basestring = 'v0:' + timestamp + ':' + request.body
+    const my_signature = 'v0=' + hmac.update(sig_basestring).digest('hex')
+    // console.log(my_signature)
+    return !!my_signature && my_signature === slack_signature
 }
 
 module.exports = {
