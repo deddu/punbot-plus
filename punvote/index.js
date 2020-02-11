@@ -185,6 +185,8 @@ const handler = async (event) => {
     // idk those two are needed for local evts wiht the apigw format
     // const body = JSON.parse(event.body)
     // const slack_raw = body.body
+    log(event)
+    slack_api.verify("hello", event)
     const slack_raw = JSON.parse(event.body)
     
     let resp;
@@ -196,7 +198,6 @@ const handler = async (event) => {
             break;
         }
         case 'url_verification':{
-            log('here')
             resp = {challenge: slack_raw.challenge}
             break;
         }
