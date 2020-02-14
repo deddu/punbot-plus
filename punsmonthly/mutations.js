@@ -1,6 +1,8 @@
 const AWSXRay = require('aws-xray-sdk-core')
 const AWS = AWSXRay.captureAWS(require('aws-sdk'))
 
+const documentClient = new AWS.DynamoDB.DocumentClient();
+
 const TABLE = process.env.TABLE_NAME || "monthlyScoresTable"
 
 const put_record = (record)=>{
