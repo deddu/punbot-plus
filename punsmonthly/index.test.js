@@ -212,6 +212,34 @@ test('rmMonthly deletes the last pun score and the author',()=>{
     expect(computed.authors).toEqual(expected.authors)
 })
 
+test('rmMonthly doesnt crash if theres no current',()=>{
+    const oldP = {
+        pk:'c123:a123',
+        score:10,
+        sk:'p2',
+        chan_yymm:'c123:2020-01'
+    }
+    
+    const current = undefined;
+
+    const expected = {
+        pk: 'c123:2020-01',
+        authors:{
+            a3:{
+                avg:10,
+                punsScores:{p1:10}
+            }
+        }
+    }
+    
+    const computed = rmMonthly(undefined,oldP)
+    expect(computed.authors).toEqual({})
+    // const computed2 = rmMonthly({pk:'c123:2020-01'},oldP)
+    // expect(computed2.authors).toEqual({})
+    const computed3 = rmMonthly({pk:'c123:2020-01', authors:{}},oldP)
+    expect(computed3.authors).toEqual({})
+})
+
 
 test('upEver returns a clean record on new pun', ()=>{
     // it returns new record on not existing
